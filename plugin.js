@@ -51,8 +51,8 @@ penpot.ui.onMessage((message) => {
         const freshLightSet = catalog.sets.find(s => s.name === 'Palette Studio/Light');
         const freshDarkSet = catalog.sets.find(s => s.name === 'Palette Studio/Dark');
 
-        if (freshLightSet) lightTheme.addSet(freshLightSet);
-        if (freshDarkSet) darkTheme.addSet(freshDarkSet);
+        if (freshLightSet) lightTheme.addSet(freshLightSet.id);
+        if (freshDarkSet) darkTheme.addSet(freshDarkSet.id);
       }
 
     } else {
