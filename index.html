@@ -452,13 +452,13 @@ function makeShades(srcHex, cf, lockHue, nSteps, Lshift, cScale, tShift, fixedL=
   let neutralHue=0, neutralChroma=0;
   if(fixedL !== null){
     const {hue: brandHue} = hctFromHex(srcHex);
-    const tNorm = tShift / 50; 
-    const pole = tNorm < 0 ? 220 : 30; 
+    const tNorm = tShift / 50;
+    const pole = tNorm < 0 ? 220 : 30;
     const tAbs = Math.abs(tNorm);
     const dH = ((pole - brandHue + 540) % 360) - 180;
     neutralHue = (brandHue + dH * tAbs + 360) % 360;
     const brandC = hctFromHex(srcHex).chroma;
-    const brandBoost = Math.min(brandC / 40, 1) * 2; 
+    const brandBoost = Math.min(brandC / 40, 1) * 2;
     neutralChroma = Math.max(0, (cScale - 0.1) / 1.7 * 8 + brandBoost);
   }
 
@@ -567,7 +567,7 @@ function loadState() {
     rebuild();
     return;
   }
-  
+
   try {
     const state = JSON.parse(saved);
 
@@ -576,7 +576,7 @@ function loadState() {
     exportSteps = state.exportSteps || exportSteps;
     ctBg1 = state.ctBg1 || ctBg1;
     ctBg2 = state.ctBg2 || ctBg2;
-    
+
     if (document.getElementById('aiText')) {
         document.getElementById('aiText').value = state.aiText || '';
     }
@@ -588,17 +588,17 @@ function loadState() {
       document.getElementById('s-tmp').value = state.sliders.tmp;
       document.getElementById('s-stp').value = state.sliders.stp;
     }
-    
+
     // Render based on loaded data
-    onSlide(); 
+    onSlide();
     renderSources();
     renderRoleGroups();
     rebuild();
-    
+
     // Update contrast visual buttons
     document.getElementById('btn-bg1').style.background = ctBg1;
     document.getElementById('btn-bg2').style.background = ctBg2;
-    
+
   } catch (e) {
     console.error("Failed to load state", e);
     // In case of parsing error - render default state too
@@ -652,7 +652,7 @@ let roleState = {};
 ROLE_CATALOG.forEach(r=>{
   roleState[r.id]={
     enabled: r.defaultOn,
-    sourceId: null, 
+    sourceId: null,
   };
 });
 
@@ -753,12 +753,12 @@ function toggleGroup(gid){
   el.style.display=el.style.display==='none'?'':'none';
 }
 function setRoleSrc(id,sid){
-  if(roleState[id]) roleState[id].sourceId=sid; 
+  if(roleState[id]) roleState[id].sourceId=sid;
   rebuild(); persistState();
 }
 function renameSource(id,val){
   const s=sources.find(x=>x.id===id);
-  if(s) s.name=val; 
+  if(s) s.name=val;
   renderRoleGroups(); persistState();
 }
 
@@ -771,7 +771,7 @@ function rebuild(){
 function onSlide(){['val','aro','tmp','stp'].forEach(k=>{
     document.getElementById('v-'+k).textContent=document.getElementById('s-'+k).value;
   });
-  rebuild(); 
+  rebuild();
   persistState(); // Call this on every change
 }
 
@@ -950,7 +950,7 @@ function genExport(palData){
     });
   }
   const key=n=>n.toLowerCase().replace(/\s+/g,'-');
-  
+
   if (exportFmt === 'css') {
     const lines = [':root {'];
     palData.forEach(p => {
@@ -963,7 +963,7 @@ function genExport(palData){
     lines.push('}');
     return lines.join('\n');
   }
-  
+
   if (exportFmt === 'tailwind') {
     const lines = ['colors: {'];
     palData.forEach(p => {
@@ -980,7 +980,7 @@ function genExport(palData){
     lines.push('}');
     return lines.join('\n');
   }
-  
+
   // JSON
   const obj = {};
   palData.forEach(p => {
@@ -1038,10 +1038,10 @@ function exportToPenpot() {
   });
 
   // Send tokenized colors to Penpot main thread
-  penpot.ui.sendMessage({
+  parent.postMessage({
     type: 'ADD_COLORS',
     colors: colorsToExport
-  });
+  }, '*');
 }
 
 // Listen for messages from Penpot logic
@@ -1194,7 +1194,7 @@ function copyT(text) {
   // 2. Select and copy
   textArea.focus();
   textArea.select();
-  
+
   try {
     const successful = document.execCommand('copy');
     if (successful) {
@@ -1203,7 +1203,7 @@ function copyT(text) {
   } catch (err) {
     console.error('Oops, unable to copy', err);
   }
-  
+
   // 3. Remove
   document.body.removeChild(textArea);
 }
@@ -1328,7 +1328,7 @@ function extractFromImage(input){
       // K-means in OKLCH
       const k = sources.length;
       const centers = kMeans(useSamples, k);
-      centers.sort((a,b)=>b[1]-a[1]); 
+      centers.sort((a,b)=>b[1]-a[1]);
       // Apply — clamp L and C to valid range
       let applied = 0;
       centers.forEach((center, i) => {
@@ -1363,7 +1363,7 @@ function kMeans(points, k, iterations=20){
   const centers = [points[Math.floor(Math.random()*points.length)]];
   while(centers.length < k){
     let best=null, bestDist=0;
-    const sample = points.filter((_,i)=>i%8===0); 
+    const sample = points.filter((_,i)=>i%8===0);
     sample.forEach(p=>{
       const d = Math.min(...centers.map(c=>oklchDist(p,c)));
       if(d>bestDist){bestDist=d;best=p}
