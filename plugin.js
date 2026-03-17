@@ -15,6 +15,12 @@ penpot.ui.onMessage((message) => {
 
       // Always one set — "Palette Studio"
       const tokenSet = catalog.addSet({ name: 'Palette Studio' });
+      console.log('tokenSet type tag:', tokenSet[Symbol.toStringTag]);
+      console.log('tokenSet proto:', Object.getPrototypeOf(tokenSet));
+
+      const liveSet = catalog.getSetById(tokenSet.id);
+      console.log('liveSet type tag:', liveSet?.[Symbol.toStringTag]);
+      console.log('are they same?', tokenSet === liveSet);
 
       // Add all colors to the single set
       lightColors.forEach((c) => {
