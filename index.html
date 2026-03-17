@@ -111,7 +111,7 @@ main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 60px;display:block;ba
 .shade-ct{display:flex;flex-direction:column;gap:2px;align-items:center;margin-top:3px;min-height:32px}
 .ct-row{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;display:flex;align-items:center;gap:3px}
 .ct-dot{width:6px;height:6px;border-radius:50%;border:1px solid rgba(128,128,128,.3);flex-shrink:0}
-.ct-aaa{color:#22d4a0}.ct-aa{color:#f5a623}.ct-fail{color:var(--t3);opacity:.35}
+.ct-aaa{color:#22d4a0}.ct-aa{color:#f5a623}.ct-fail{color:#e86060}
 /* Help modal */
 .help-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto}
 .help-box{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:28px 32px;max-width:580px;width:90%;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.3)}
@@ -125,7 +125,7 @@ main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 60px;display:block;ba
 .help-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:700;margin-right:4px}
 .help-badge.green{background:#22d4a020;color:#22d4a0}
 .help-badge.orange{background:#f5a62320;color:#f5a623}
-.help-badge.grey{background:var(--bg3);color:var(--t3)}
+.help-badge.red{background:#e8606020;color:#e86060}
 /* Preview & Export */
 .preview-card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px}
 .export-card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
@@ -190,6 +190,8 @@ main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 60px;display:block;ba
       <button class="theme-btn" onclick="setTheme('dark',this)">☾</button>
     </div>
     <button class="btn sm" onclick="document.getElementById('helpModal').style.display='flex'" title="Help">? Help</button>
+    <button class="btn sm" onclick="exportPalette()" title="Export palette to JSON file">↓ Export</button>
+    <label class="btn sm" title="Import palette from JSON file" style="cursor:pointer">↑ Import<input type="file" accept=".json" onchange="importPalette(event)" style="display:none"></label>
     <button class="btn sm" onclick="copyAllCSS()">↓ CSS</button>
   </div>
 </nav>
@@ -502,6 +504,36 @@ function makeSemanticShades(fixedHue, brandHex, nSteps, Lshift, cScale){
     tone = Math.max(3, Math.min(97, tone));
     return { step: STEPS[idx], hex: hexFromHct(fixedHue, semC, tone) };
   });
+}
+
+// ══════════════════════════════════════════ EXPORT / IMPORT
+function exportPalette() {
+  const state = JSON.parse(localStorage.getItem('paletteStudioState') || '{}');
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'palette-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Palette exported');
+}
+
+function importPalette(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const state = JSON.parse(e.target.result);
+      localStorage.setItem('paletteStudioState', JSON.stringify(state));
+      loadState();
+      toast('Palette imported');
+    } catch(err) {
+      toast('Invalid file');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 // ══════════════════════════════════════════ STATE PERSISTENCE
@@ -1373,62 +1405,62 @@ checkConn();
 <div id="helpModal" class="help-modal" onclick="if(event.target===this)this.style.display='none'">
   <div class="help-box">
     <button class="help-close" onclick="document.getElementById('helpModal').style.display='none'">✕</button>
-    <div class="help-h1">Palette Studio — как все работает</div>
+    <div class="help-h1">Palette Studio — How it works</div>
 
     <div class="help-section">
       <h3>Color Sources</h3>
-      <p>Независимые брендовые цвета. Все роли берут hue из Sources. Можно добавить несколько и назначить каждой роли свой источник через выпадающее меню рядом с ролью.</p>
+      <p>Independent brand colors. All roles inherit their hue from Sources. You can add multiple sources and assign a specific source to each role via the dropdown menu next to the role.</p>
     </div>
 
     <div class="help-section">
-      <h3>Semantic Roles (группы)</h3>
+      <h3>Semantic Roles (groups)</h3>
       <ul>
-        <li><b>Core</b> — Primary и Secondary. Основные цвета бренда.</li>
-        <li><b>Neutral</b> — Background, Surface, Border, Text. Генерируются через HCT с брендовым hue.</li>
-        <li><b>Accent</b> — дополнительные акцентные цвета из других Sources.</li>
-        <li><b>Semantic</b> — Error, Warning, Success, Info. Фиксированные hue (красный/жёлтый/зелёный/синий), насыщенность зависит от бренда и Arousal.</li>
-        <li><b>Extended</b> — Highlight, On Primary и другие вспомогательные роли.</li>
+        <li><b>Core</b> — Primary and Secondary. The main brand colors.</li>
+        <li><b>Neutral</b> — Background, Surface, Border, Text. Generated via HCT using the brand hue.</li>
+        <li><b>Accent</b> — Additional accent colors from other Sources.</li>
+        <li><b>Semantic</b> — Error, Warning, Success, Info. Fixed hues (red/yellow/green/blue); saturation depends on the brand and Arousal.</li>
+        <li><b>Extended</b> — Highlight, On Primary, and other supporting roles.</li>
       </ul>
     </div>
 
     <div class="help-section">
       <h3>Mood Sliders</h3>
       <ul>
-        <li><b>Valence</b> — светлота палитры. Минус = тёмная тема, плюс = светлая.</li>
-        <li><b>Arousal</b> — насыщенность. Минус = приглушённые мутные тона, плюс = яркие насыщенные.</li>
-        <li><b>Temperature</b> — тепло/холод. Минус = холодный синеватый оттенок, плюс = тёплый оранжевый.</li>
-        <li><b>Shades</b> — количество ступеней в шкале (5–12).</li>
+        <li><b>Valence</b> — Lightness of the palette. Negative = dark theme, positive = light theme.</li>
+        <li><b>Arousal</b> — Saturation. Negative = muted, dull tones, positive = bright, vivid tones.</li>
+        <li><b>Temperature</b> — Warm/cool. Negative = cool bluish tint, positive = warm orange tint.</li>
+        <li><b>Shades</b> — Number of steps in the scale (5–12).</li>
       </ul>
     </div>
 
     <div class="help-section">
-      <h3>Контрастность (APCA)</h3>
-      <p>Используется APCA — алгоритм WCAG 3.0, точнее чем старый WCAG 2.1. Показывается для двух фоновых цветов которые можно задать в разделе Contrast Check.</p>
+      <h3>Contrast Check (APCA)</h3>
+      <p>Uses APCA — the WCAG 3.0 algorithm, which is more accurate than the old WCAG 2.1. Displayed for two background colors that can be set in the Contrast Check section.</p>
       <ul>
-        <li><span class="help-badge green">Lc 75+</span> нормальный текст любого размера</li>
-        <li><span class="help-badge orange">Lc 60+</span> крупный текст (18px+) или жирный</li>
-        <li><span class="help-badge grey">Lc &lt;60</span> только декоративные элементы</li>
+        <li><span class="help-badge green">Lc 75+</span> Normal text of any size</li>
+        <li><span class="help-badge orange">Lc 60+</span> Large text (18px+) or bold text</li>
+        <li><span class="help-badge red">Lc &lt;60</span> Decorative elements only</li>
       </ul>
     </div>
 
     <div class="help-section">
       <h3>Harmony</h3>
-      <p>Автоматически расставляет Sources по цветовому кругу. Complementary — противоположный цвет, Triadic — три цвета через 120°, и т.д. Повторный клик на активный пресет — отмена.</p>
+      <p>Automatically arranges Sources on the color wheel. Complementary — opposite color, Triadic — three colors spaced by 120°, etc. Click an active preset again to undo.</p>
     </div>
 
     <div class="help-section">
       <h3>From Image</h3>
-      <p>Извлекает доминантные цвета из картинки через K-means кластеризацию в OKLCH. Применяет к Sources. Работает даже для ч/б изображений.</p>
+      <p>Extracts dominant colors from an image using K-means clustering in OKLCH. Applies them to Sources. Works even for B&W images.</p>
     </div>
 
     <div class="help-section">
       <h3>AI Generation</h3>
-      <p>Подключается к локальной модели через LM Studio (порт 1234). Описываешь настроение — модель выбирает hue для каждого Source и настраивает ползунки. Ответ модели отображается под кнопкой Generate.</p>
+      <p>Connects to a local model via LM Studio (port 1234). Describe the mood — the model selects a hue for each Source and adjusts the sliders. The model's response is displayed below the Generate button.</p>
     </div>
 
     <div class="help-section">
       <h3>Export</h3>
-      <p>CSS Variables, Tailwind config или JSON. Кнопка ↓ CSS в шапке копирует CSS в буфер сразу.</p>
+      <p>CSS Variables, Tailwind config, or JSON. The ↓ CSS button in the header copies the CSS to the clipboard immediately.</p>
     </div>
   </div>
 </div>
