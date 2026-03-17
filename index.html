@@ -999,8 +999,6 @@ function genExport(palData){
 
 // ══════════════════════════════════════════ EXPORT TO PENPOT
 function exportToPenpot(mode) {
-  // mode = 'tokens' (for tokens) or 'assets' (for assets/resources)
-
   const { Lshift, C, T, S } = getSliders();
   const active = activeRoles();
   if(!active.length) return toast('No active roles to export');
@@ -1019,36 +1017,42 @@ function exportToPenpot(mode) {
 
   palData.forEach(p => {
     const cfg = exportSteps[p.id] || { light: 'none', dark: 'none' };
-    const groupKey = key(p.group || 'color');
-    const nameKey = key(p.name);
-
-    // Check if both light and dark are selected
     const hasLight = cfg.light !== 'none';
     const hasDark = cfg.dark !== 'none';
     const hasBoth = hasLight && hasDark;
 
     if (mode === 'tokens') {
-      // TOKEN MODE: keep the full name like "core.primary.light"
+      // TOKEN MODE
+      // Name without .light/.dark suffix — variant is sent separately
+      // so plugin.js can use it for theme distribution
+      const tokenName = `${key(p.group || 'color')}.${key(p.name)}`;
+
       if (hasLight) {
         const lShade = p.shades.find(s => s.step == cfg.light);
-        if (lShade) colorsToExport.push({ name: `${groupKey}.${nameKey}.light`, hex: lShade.hex });
+        if (lShade) colorsToExport.push({
+          name: tokenName,
+          hex: lShade.hex,
+          variant: 'light' // tells plugin.js this is the light version
+        });
       }
       if (hasDark) {
         const dShade = p.shades.find(s => s.step == cfg.dark);
-        if (dShade) colorsToExport.push({ name: `${groupKey}.${nameKey}.dark`, hex: dShade.hex });
+        if (dShade) colorsToExport.push({
+          name: tokenName,
+          hex: dShade.hex,
+          variant: 'dark' // tells plugin.js this is the dark version
+        });
       }
     } else {
-      // ASSET MODE: group = "Core", name = "Primary" or "Primary (Light)"
-      // Capitalize first letter of name, e.g. "primary" → "Primary"
+      // ASSET MODE
+      // Group name like "Core", display name like "Primary" or "Primary (Light)"
       const groupName = p.group || 'Color';
       const displayName = p.name.charAt(0).toUpperCase() + p.name.slice(1);
 
       if (hasLight) {
         const lShade = p.shades.find(s => s.step == cfg.light);
         if (lShade) {
-          // If both variants selected, add "(Light)" suffix. If only one — no suffix.
           const label = hasBoth ? `${displayName} (Light)` : displayName;
-          // Penpot groups colors by "/" in the name
           colorsToExport.push({ name: `${groupName}/${label}`, hex: lShade.hex });
         }
       }
@@ -1062,7 +1066,6 @@ function exportToPenpot(mode) {
     }
   });
 
-  // Send colors to plugin.js with the mode included
   parent.postMessage({
     type: 'ADD_COLORS',
     mode: mode,
