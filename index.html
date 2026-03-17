@@ -1038,10 +1038,10 @@ function exportToPenpot() {
   });
 
   // Send tokenized colors to Penpot main thread
-  parent.postMessage({
+  penpot.ui.sendMessage({
     type: 'ADD_COLORS',
     colors: colorsToExport
-  }, '*');
+  });
 }
 
 // Listen for messages from Penpot logic
