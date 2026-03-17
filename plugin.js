@@ -9,19 +9,55 @@ penpot.ui.onMessage((message) => {
     if (message.mode === 'tokens') {
       const catalog = penpot.library.local.tokens;
 
-      // Find existing set named "Palette Studio" or create a new one
       let tokenSet = catalog.sets.find(s => s.name === 'Palette Studio');
       if (!tokenSet) {
         tokenSet = catalog.addSet({ name: 'Palette Studio' });
       }
 
-      message.colors.forEach((c) => {
-        tokenSet.addToken({
-          type: 'color',
-          name: c.name,
-          value: c.hex
+      const lightColors = message.colors.filter(c => c.variant === 'light');
+      const darkColors = message.colors.filter(c => c.variant === 'dark');
+
+      const hasAnyLight = lightColors.length > 0;
+      const hasAnyDark = darkColors.length > 0;
+      const needsThemes = hasAnyLight && hasAnyDark;
+
+      if (!needsThemes) {
+        message.colors.forEach((c) => {
+          tokenSet.addToken({
+            type: 'color',
+            name: c.name,
+            value: c.hex
+          });
         });
-      });
+      } else {
+        let lightTheme = catalog.themes.find(t => t.name === 'Light');
+        if (!lightTheme) {
+          lightTheme = catalog.addTheme({ group: '', name: 'Light' });
+        }
+
+        let darkTheme = catalog.themes.find(t => t.name === 'Dark');
+        if (!darkTheme) {
+          darkTheme = catalog.addTheme({ group: '', name: 'Dark' });
+        }
+
+        lightColors.forEach((c) => {
+          tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
+          lightTheme.addSet(tokenSet.name);
+          const hasDark = darkColors.some(d => d.name === c.name);
+          if (!hasDark) {
+            darkTheme.addSet(tokenSet.name);
+          }
+        });
+
+        darkColors.forEach((c) => {
+          tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
+          darkTheme.addSet(tokenSet.name);
+          const hasLight = lightColors.some(l => l.name === c.name);
+          if (!hasLight) {
+            lightTheme.addSet(tokenSet.name);
+          }
+        });
+      }
 
     } else {
       message.colors.forEach((c) => {
