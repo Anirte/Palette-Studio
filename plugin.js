@@ -1,3 +1,15 @@
+// This runs immediately when plugin opens — tests addSet on theme
+const catalog = penpot.library.local.tokens;
+const testSet = catalog.addSet({ name: 'DebugTest' });
+const theme = catalog.addTheme({ group: '', name: 'DebugTheme' });
+
+try {
+  theme.addSet(testSet);
+  penpot.ui.sendMessage({ type: 'DEBUG', result: 'SUCCESS', activeSets: theme.activeSets.length });
+} catch(e) {
+  penpot.ui.sendMessage({ type: 'DEBUG', result: 'ERROR', error: e.message });
+}
+
 penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   width: 900,
   height: 640
