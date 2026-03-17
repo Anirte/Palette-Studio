@@ -14,7 +14,7 @@ penpot.ui.onMessage((message) => {
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
 
       if (!needsThemes) {
-        // No themes needed — just one set
+        // Only one variant — no themes needed, just one set
         const existingSet = catalog.sets.find(s => s.name === 'Palette Studio');
         const tokenSet = existingSet ?? catalog.addSet({ name: 'Palette Studio' });
         message.colors.forEach((c) => {
@@ -22,11 +22,14 @@ penpot.ui.onMessage((message) => {
         });
 
       } else {
-        // Always create fresh sets via addSet — these return live proxies
-        // that Penpot accepts in addSet() of a theme
+        // Both light and dark variants — create two sets and two themes
+
+        // Create the sets (addSet returns a live proxy object)
         const lightSet = catalog.addSet({ name: 'Palette Studio/Light' });
         const darkSet = catalog.addSet({ name: 'Palette Studio/Dark' });
 
+        // Add light colors to the light set
+        // If a color has no dark variant, add it to the dark set too
         lightColors.forEach((c) => {
           lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
           if (!darkColors.some(d => d.name === c.name)) {
@@ -34,6 +37,8 @@ penpot.ui.onMessage((message) => {
           }
         });
 
+        // Add dark colors to the dark set
+        // If a color has no light variant, add it to the light set too
         darkColors.forEach((c) => {
           darkSet.addToken({ type: 'color', name: c.name, value: c.hex });
           if (!lightColors.some(l => l.name === c.name)) {
@@ -41,16 +46,21 @@ penpot.ui.onMessage((message) => {
           }
         });
 
-        // Create themes — always fresh via addTheme which also returns live proxies
+        // Create themes
+        // addTheme also returns a live proxy object
         const lightTheme = catalog.addTheme({ group: 'Palette Studio', name: 'Light' });
         const darkTheme = catalog.addTheme({ group: 'Palette Studio', name: 'Dark' });
 
-        // Pass the live proxy objects directly — NOT from find()
-        lightTheme.addSet(lightSet);
-        darkTheme.addSet(darkSet);
+        // Use getSetById to get live proxies — these are accepted by addSet() of a theme
+        const liveLightSet = catalog.getSetById(lightSet.id);
+        const liveDarkSet = catalog.getSetById(darkSet.id);
+
+        if (liveLightSet) lightTheme.addSet(liveLightSet);
+        if (liveDarkSet) darkTheme.addSet(liveDarkSet);
       }
 
     } else {
+      // ASSETS MODE — add colors to the local library as regular color assets
       message.colors.forEach((c) => {
         const newColor = penpot.library.local.createColor();
         newColor.name = c.name;
