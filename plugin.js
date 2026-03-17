@@ -6,14 +6,13 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
 penpot.ui.onMessage((message) => {
   if (message.type === 'ADD_COLORS') {
     message.colors.forEach((c) => {
-      penpot.library.local.colors.create({ 
-        name: c.name, 
-        color: c.hex 
-      });
+      const newColor = penpot.library.local.createColor();
+      newColor.name = c.name;
+      newColor.color = c.hex;
     });
-    penpot.ui.sendMessage({ 
-      type: 'COLORS_ADDED', 
-      count: message.colors.length 
+    penpot.ui.sendMessage({
+      type: 'COLORS_ADDED',
+      count: message.colors.length
     });
   }
 });
