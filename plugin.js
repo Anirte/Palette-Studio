@@ -14,18 +14,18 @@ penpot.ui.onMessage((message) => {
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
 
       if (!needsThemes) {
-        let tokenSet = catalog.sets.find(s => s.name === 'Palette Studio');
-        if (!tokenSet) tokenSet = catalog.addSet({ name: 'Palette Studio' });
+        // No themes needed — just one set
+        const existingSet = catalog.sets.find(s => s.name === 'Palette Studio');
+        const tokenSet = existingSet ?? catalog.addSet({ name: 'Palette Studio' });
         message.colors.forEach((c) => {
           tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
         });
 
       } else {
-        let lightSet = catalog.sets.find(s => s.name === 'Palette Studio/Light');
-        if (!lightSet) lightSet = catalog.addSet({ name: 'Palette Studio/Light' });
-
-        let darkSet = catalog.sets.find(s => s.name === 'Palette Studio/Dark');
-        if (!darkSet) darkSet = catalog.addSet({ name: 'Palette Studio/Dark' });
+        // Always create fresh sets via addSet — these return live proxies
+        // that Penpot accepts in addSet() of a theme
+        const lightSet = catalog.addSet({ name: 'Palette Studio/Light' });
+        const darkSet = catalog.addSet({ name: 'Palette Studio/Dark' });
 
         lightColors.forEach((c) => {
           lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
@@ -41,18 +41,13 @@ penpot.ui.onMessage((message) => {
           }
         });
 
-        let lightTheme = catalog.themes.find(t => t.name === 'Light');
-        if (!lightTheme) lightTheme = catalog.addTheme({ group: 'Palette Studio', name: 'Light' });
+        // Create themes — always fresh via addTheme which also returns live proxies
+        const lightTheme = catalog.addTheme({ group: 'Palette Studio', name: 'Light' });
+        const darkTheme = catalog.addTheme({ group: 'Palette Studio', name: 'Dark' });
 
-        let darkTheme = catalog.themes.find(t => t.name === 'Dark');
-        if (!darkTheme) darkTheme = catalog.addTheme({ group: 'Palette Studio', name: 'Dark' });
-
-        // Pass the actual set objects, not strings
-        const freshLightSet = catalog.sets.find(s => s.name === 'Palette Studio/Light');
-        const freshDarkSet = catalog.sets.find(s => s.name === 'Palette Studio/Dark');
-
-        if (freshLightSet) lightTheme.addSet(freshLightSet.id);
-        if (freshDarkSet) darkTheme.addSet(freshDarkSet.id);
+        // Pass the live proxy objects directly — NOT from find()
+        lightTheme.addSet(lightSet);
+        darkTheme.addSet(darkSet);
       }
 
     } else {
