@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palette Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark}[data-theme="dark"]{--bg:#0e0e12;--bg2:#15151c;--bg3:#1c1c26;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--t1:#e8e8f0;--t2:#9090a8;--t3:#50505e;--inp:#1c1c26;--inp-b:rgba(255,255,255,.1);--shadow:0 4px 16px rgba(0,0,0,.5)}
+[data-theme="light"]{--bg:#f5f5f7;--bg2:#ffffff;--bg3:#ebebef;--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.18);--t1:#111118;--t2:#555568;--t3:#aaaabc;--inp:#fff;--inp-b:rgba(0,0,0,.12);--shadow:0 4px 16px rgba(0,0,0,.1)}
+@media(prefers-color-scheme:dark){[data-theme="system"]{--bg:#0e0e12;--bg2:#15151c;--bg3:#1c1c26;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--t1:#e8e8f0;--t2:#9090a8;--t3:#50505e;--inp:#1c1c26;--inp-b:rgba(255,255,255,.1);--shadow:0 4px 16px rgba(0,0,0,.5)}}
+@media(prefers-color-scheme:light){[data-theme="system"]{--bg:#f5f5f7;--bg2:#ffffff;--bg3:#ebebef;--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.18);--t1:#111118;--t2:#555568;--t3:#aaaabc;--inp:#fff;--inp-b:rgba(0,0,0,.12);--shadow:0 4px 16px rgba(0,0,0,.1)}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+nav{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--bg2)}
+.nav-l{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;letter-spacing:-.3px}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:#5b6af5;box-shadow:0 0 8px #5b6af566}
+.nav-r{display:flex;gap:6px;align-items:center}
+.theme-seg{display:flex;background:var(--bg3);border:1px solid var(--line);border-radius:6px;overflow:hidden;padding:2px;gap:2px}
+.theme-btn{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;padding:3px 8px;border-radius:4px;border:none;background:none;color:var(--t3);cursor:pointer}
+.theme-btn.on{background:var(--bg2);color:var(--t1);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.shell{display:flex;flex:1;min-height:0}
+aside{width:340px;flex-shrink:0;min-height:0;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--bg2);z-index:10}
+.aside-inner{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:18px}
+.sec-label{font-size:13px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);margin-bottom:6px}
+/* AI */
+.ai-box{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg3)}
+.ai-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--line);gap:8px}
+.ai-port-label{font-size:13px;color:var(--t3)}
+input.port-in{font-family:'IBM Plex Mono',monospace;font-size:14px;width:52px;background:var(--inp);border:1px solid var(--inp-b);border-radius:4px;color:var(--t1);padding:2px 6px;outline:none;text-align:center}
+.ai-status{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--t3)}
+.ai-resp{display:none;margin-top:8px;padding:8px 10px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;font-size:12px;color:var(--t2);line-height:1.5}
+.ai-resp-label{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:3px;letter-spacing:.5px}
+.ai-resp-text{color:var(--t1)}
+.status-dot{width:5px;height:5px;border-radius:50%;background:var(--t3)}
+.status-dot.ok{background:#22d4a0;box-shadow:0 0 5px #22d4a066}
+select.model-sel{width:100%;font-family:inherit;font-size:14px;background:var(--inp);border:1px solid var(--inp-b);border-radius:4px;color:var(--t1);padding:5px 8px;outline:none}
+textarea.ai-ta{width:100%;min-height:60px;font-family:inherit;font-size:15px;padding:9px 10px;background:transparent;border:none;color:var(--t1);outline:none;resize:none;line-height:1.5}
+.ai-foot{display:flex;justify-content:flex-end;padding:6px 8px;border-top:1px solid var(--line)}
+hr.div{border:none;border-top:1px solid var(--line);margin:0 -14px}
+/* Sources */
+.source-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);margin-bottom:4px}
+.swatch-btn{width:26px;height:26px;border-radius:4px;border:none;cursor:pointer;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.source-name-in{flex:1;font-family:inherit;font-size:15px;font-weight:500;background:none;border:none;color:var(--t1);outline:none;min-width:0}
+.icon-btn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:2px 3px;line-height:1}
+.icon-btn:hover{color:var(--t1)}
+.del-btn:hover{color:#f43f5e}
+.add-btn{width:100%;padding:6px;font-size:14px;font-weight:500;border-radius:6px;border:1px dashed var(--line2);background:none;color:var(--t3);cursor:pointer;margin-top:2px}
+.add-btn:hover{color:var(--t1);border-color:#5b6af5}
+/* Role groups */
+.role-group{margin-bottom:8px}
+.group-header{display:flex;align-items:center;gap:7px;padding:4px 0;cursor:pointer;user-select:none}
+.group-check{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--line2);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .1s}
+.group-check.on{background:#5b6af5;border-color:#5b6af5}
+.group-check.partial{background:none;border-color:#5b6af5}
+.group-check.on::after,.group-check.partial::after{content:'';display:block;width:7px;height:2px;background:#fff;border-radius:1px}
+.group-check.on::after{width:7px;height:7px;background:none;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg) translate(-1px,-2px)}
+.group-name{font-size:13px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);flex:1}
+.group-toggle{font-size:12px;color:var(--t3)}
+.group-roles{padding-left:6px;border-left:1px solid var(--line);margin-left:6px;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:max-height .2s}
+.role-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;transition:background .1s}
+.role-row:hover{background:var(--bg3)}
+.role-row.disabled{opacity:.4}
+.role-check{width:13px;height:13px;border-radius:3px;border:1.5px solid var(--line2);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.role-check.on{background:#5b6af5;border-color:#5b6af5}
+.role-check.on::after{content:'✓';font-size:11px;color:#fff;line-height:1}
+.role-swatch{width:12px;height:12px;border-radius:2px;flex-shrink:0;border:1px solid var(--line)}
+.role-label{flex:1;font-size:14px;color:var(--t1);min-width:0}
+.role-label-dim{font-size:12px;color:var(--t3);margin-left:2px}
+.role-src-sel {
+  font-family: inherit;
+  font-size: 12px;
+  background: var(--inp);
+  border: 1px solid var(--inp-b);
+  border-radius: 3px;
+  color: var(--t2);
+  padding: 1px 3px;
+  outline: none;
+  min-width: 80px; /* Увеличили ширину */
+  width: auto;
+}
+/* Sliders */
+.sliders{display:flex;flex-direction:column;gap:12px}
+.sl-item{display:flex;flex-direction:column;gap:4px}
+.sl-top{display:flex;justify-content:space-between;align-items:baseline}
+.sl-name{font-size:15px;color:var(--t2)}
+.sl-val{font-family:'IBM Plex Mono',monospace;font-size:14px;color:#5b6af5}
+.sl-ends{display:flex;justify-content:space-between}
+.sl-end{font-size:12px;color:var(--t3)}
+input[type=range].std-range{-webkit-appearance:none;width:100%;height:2px;background:var(--line2);border-radius:1px;outline:none;cursor:pointer}
+input[type=range].std-range::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#5b6af5;border:2px solid var(--bg2);box-shadow:0 0 5px rgba(91,106,245,.4)}
+/* Main */
+main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 60px;display:block;background:var(--bg)}
+.group-section{display:block;margin-bottom:18px}
+.group-section-label{font-size:13px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);padding-bottom:4px;border-bottom:1px solid var(--line)}
+.pal-card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:hidden;margin-bottom:10px}
+.pal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.pal-head-l{display:flex;align-items:center;gap:9px}
+.pal-dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0}
+.pal-name{font-size:15px;font-weight:500}
+.pal-meta{font-size:13px;color:var(--t3);margin-top:1px}
+.pal-hex{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--t3)}
+.pal-tag{font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:var(--bg3);color:var(--t3);border:1px solid var(--line)}
+.shades-wrap{display:flex;gap:3px}
+.shade-col{flex:1;cursor:pointer;transition:flex .15s;display:flex;flex-direction:column}
+.shade-col:hover{flex:1.6}
+.shade{height:64px;display:flex;flex-direction:column;justify-content:flex-end;padding:5px;border-radius:5px;position:relative;overflow:hidden}
+.sh-num{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;opacity:.75;line-height:1}
+.sh-tip{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);background:#000a;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:2px 5px;border-radius:3px;opacity:0;pointer-events:none;transition:opacity .1s;white-space:nowrap}
+.shade-col:hover .sh-tip{opacity:1}
+.shade-ct{display:flex;flex-direction:column;gap:2px;align-items:center;margin-top:3px;min-height:32px}
+.ct-row{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;display:flex;align-items:center;gap:3px}
+.ct-dot{width:6px;height:6px;border-radius:50%;border:1px solid rgba(128,128,128,.3);flex-shrink:0}
+.ct-aaa{color:#22d4a0}.ct-aa{color:#f5a623}.ct-fail{color:var(--t3);opacity:.35}
+/* Help modal */
+.help-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto}
+.help-box{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:28px 32px;max-width:580px;width:90%;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.help-close{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;line-height:1}
+.help-close:hover{color:var(--t1)}
+.help-h1{font-size:18px;font-weight:700;margin-bottom:18px;color:var(--t1)}
+.help-section{margin-bottom:18px}
+.help-section h3{font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px}
+.help-section p,.help-section li{font-size:14px;color:var(--t2);line-height:1.6;margin-bottom:4px}
+.help-section ul{padding-left:16px;margin:0}
+.help-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:700;margin-right:4px}
+.help-badge.green{background:#22d4a020;color:#22d4a0}
+.help-badge.orange{background:#f5a62320;color:#f5a623}
+.help-badge.grey{background:var(--bg3);color:var(--t3)}
+/* Preview & Export */
+.preview-card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.export-card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.prev-lbl{padding:10px 14px 0;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3)}
+.prev-select{font-family:inherit;font-size:13px;background:var(--bg3);border:1px solid var(--line);border-radius:4px;color:var(--t1);padding:2px 4px;outline:none}
+.prev-body{padding:12px}
+.prev-inner{border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+.prev-h{font-size:18px;font-weight:600}
+.prev-p{font-size:15px;line-height:1.5}
+.prev-btns{display:flex;gap:8px}
+.prev-btn{font-size:14px;font-weight:600;padding:6px 13px;border-radius:5px;border:none;cursor:pointer}
+.export-tabs{display:flex;border-bottom:1px solid var(--line)}
+.etab{font-size:14px;font-weight:500;padding:8px 12px;background:none;border:none;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent}
+.etab.on{color:var(--t1);border-bottom-color:#5b6af5}
+.export-code{font-family:'IBM Plex Mono',monospace;font-size:14px;padding:12px;max-height:300px;overflow-y:auto;white-space:pre;color:var(--t2)}
+.btn{font-size:14px;font-weight:600;padding:5px 11px;border-radius:5px;border:1px solid var(--line);background:var(--bg3);color:var(--t2);cursor:pointer;display:inline-flex;align-items:center}
+.btn.pri{background:#5b6af5;border-color:#5b6af5;color:#fff}
+.btn.sm{font-size:13px;padding:3px 8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:9px;height:9px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .5s linear infinite}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#22d4a0;color:#041a10;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:10000}
+.toast.show{opacity:1}
+/* Color picker */
+.cp-popover{position:absolute;z-index:9999;display:none;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);width:230px;flex-direction:column;gap:10px}
+.cp-row{display:flex;align-items:center;gap:8px}
+.cp-lbl{font-size:13px;font-weight:600;width:10px;color:var(--t2)}
+.cp-slider{-webkit-appearance:none;width:100%;height:12px;border-radius:6px;outline:none;cursor:pointer;border:1px solid rgba(0,0,0,.1)}
+.cp-slider::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:18px;background:#111;border-radius:3px;border:1.5px solid #fff;box-shadow:0 0 3px rgba(0,0,0,.5);cursor:grab}
+#cp-h{background:linear-gradient(to right,#f00 0%,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,#f00 100%)}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+/* Harmony & Image */
+.tool-row{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.tool-btn{font-family:inherit;font-size:13px;font-weight:500;padding:4px 8px;border-radius:5px;border:1px solid var(--line2);background:var(--bg3);color:var(--t2);cursor:pointer;white-space:nowrap}
+.tool-btn:hover{color:var(--t1);border-color:#5b6af5}
+.tool-btn.active{background:#5b6af5;border-color:#5b6af5;color:#fff}
+.harmony-panel{margin-top:8px;padding:8px;background:var(--bg3);border:1px solid var(--line);border-radius:6px;display:none;flex-direction:column;gap:6px}
+.harmony-panel.open{display:flex}
+.harmony-grid{display:flex;flex-wrap:wrap;gap:4px}
+.h-preset{font-family:inherit;font-size:13px;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:var(--bg2);color:var(--t2);cursor:pointer}
+.h-preset:hover{border-color:#5b6af5;color:#t1}
+.h-preset.on{background:#5b6af5;border-color:#5b6af5;color:#fff}
+.img-drop{margin-top:6px;border:1px dashed var(--line2);border-radius:6px;padding:10px;text-align:center;font-size:13px;color:var(--t3);cursor:pointer;transition:border-color .15s}
+.img-drop:hover,.img-drop.over{border-color:#5b6af5;color:var(--t2)}
+.img-drop input{display:none}
+.img-preview-wrap{position:relative;margin-top:6px;display:none}
+.img-preview-wrap .img-preview{width:100%;max-height:80px;object-fit:contain;border-radius:4px;margin-top:0;display:block;cursor:pointer;transition:opacity .15s;background:var(--bg2)}
+.img-preview-wrap .img-preview:hover{opacity:.85}
+.img-preview-close{position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:13px;line-height:16px;text-align:center;cursor:pointer;border:none;padding:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.img-preview-close:hover{background:rgba(0,0,0,.8)}
+.img-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out}
+.img-modal img{max-width:90vw;max-height:85vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+</style>
+</head>
+<body data-theme="system" onclick="closePickerOnOutside(event)">
+<nav>
+  <div class="nav-l"><div class="nav-dot"></div>Palette Studio</div>
+  <div class="nav-r">
+    <div class="theme-seg">
+      <button class="theme-btn" onclick="setTheme('light',this)">☀︎</button>
+      <button class="theme-btn on" onclick="setTheme('system',this)">Auto</button>
+      <button class="theme-btn" onclick="setTheme('dark',this)">☾</button>
+    </div>
+    <button class="btn sm" onclick="document.getElementById('helpModal').style.display='flex'" title="Help">? Help</button>
+    <button class="btn sm" onclick="copyAllCSS()">↓ CSS</button>
+  </div>
+</nav>
+<div class="shell">
+<aside>
+  <div class="aside-inner">
+    <!-- AI -->
+    <div>
+      <div class="sec-label">AI Generation</div>
+      <div class="ai-box">
+        <div class="ai-row">
+          <div style="display:flex;align-items:center;gap:5px"><span class="ai-port-label">Port</span><input class="port-in" id="port" value="1234" onchange="checkConn()"></div>
+          <div class="ai-status"><div class="status-dot" id="aiDot"></div><span id="aiStatusTxt">—</span></div>
+        </div>
+        <div style="padding:6px 8px;border-bottom:1px solid var(--line)">
+          <select class="model-sel" id="modelSel"><option value="">— select model —</option></select>
+        </div>
+        <textarea class="ai-ta" id="aiText" placeholder="воздушный журнал о науке, dark SaaS dashboard..."></textarea>
+        <div class="ai-foot"><button class="btn sm pri" id="aiBtn" onclick="runAI()"><span id="aiLabel">Generate</span></button></div>
+        <div class="ai-resp" id="aiResp">
+          <div class="ai-resp-label">AI · reasoning</div>
+          <div class="ai-resp-text" id="aiRespText"></div>
+        </div>
+      </div>
+    </div>
+    <hr class="div">
+    <!-- Sources -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="sec-label" style="margin-bottom:0">Color Sources</div>
+        <span style="font-size:12px;color:var(--t3)">brand colors</span>
+      </div>
+      <div id="sourcesList"></div>
+      <button class="add-btn" onclick="addSource()">+ Add source</button>
+      <div class="tool-row">
+        <button class="tool-btn" onclick="toggleHarmony()">⬡ Harmony</button>
+        <button class="tool-btn" onclick="document.getElementById('imgUpload').click()">🖼 From image</button>
+        <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="extractFromImage(this)">
+      </div>
+      <!-- Harmony panel -->
+      <div class="harmony-panel" id="harmonyPanel">
+        <div style="font-size:13px;color:var(--t3);margin-bottom:2px">Based on Primary hue · adjusts all sources</div>
+        <div class="harmony-grid" id="harmonyGrid"></div>
+        <img id="harmonyWheel" style="display:none">
+      </div>
+      <!-- Image preview -->
+      <div id="imgPreviewWrap" class="img-preview-wrap">
+        <img id="imgPreview" class="img-preview">
+        <button class="img-preview-close" onclick="clearImgPreview()" title="Remove image">✕</button>
+      </div>
+    </div>
+    <hr class="div">
+    <!-- Roles -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="sec-label" style="margin-bottom:0">Semantic Roles</div>
+        <span style="font-size:12px;color:var(--t3)">ui tokens</span>
+      </div>
+      <div id="roleGroups"></div>
+    </div>
+    <hr class="div">
+    <!-- Mood -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="sec-label" style="margin-bottom:0">Psychological Mood</div>
+        <button class="icon-btn" onclick="resetSliders()" title="Reset sliders" style="font-size:14px">↺</button>
+      </div>
+      <div class="sliders">
+        <div class="sl-item">
+          <div class="sl-top"><span class="sl-name">Valence</span><span class="sl-val" id="v-val">0</span></div>
+          <input type="range" id="s-val" class="std-range" min="-50" max="50" value="0" oninput="onSlide()">
+          <div class="sl-ends"><span class="sl-end">Negative (Dark)</span><span class="sl-end">Positive (Light)</span></div>
+        </div>
+        <div class="sl-item">
+          <div class="sl-top"><span class="sl-name">Arousal</span><span class="sl-val" id="v-aro">0</span></div>
+          <input type="range" id="s-aro" class="std-range" min="-50" max="50" value="0" oninput="onSlide()">
+          <div class="sl-ends"><span class="sl-end">Calm (Muted)</span><span class="sl-end">Excited (Vivid)</span></div>
+        </div>
+        <div class="sl-item">
+          <div class="sl-top"><span class="sl-name">Temperature</span><span class="sl-val" id="v-tmp">0</span></div>
+          <input type="range" id="s-tmp" class="std-range" min="-50" max="50" value="0" oninput="onSlide()">
+          <div class="sl-ends"><span class="sl-end">Cool (Blue)</span><span class="sl-end">Warm (Orange)</span></div>
+        </div>
+        <div class="sl-item" style="margin-top:4px">
+          <div class="sl-top"><span class="sl-name">Shade steps</span><span class="sl-val" id="v-stp">10</span></div>
+          <input type="range" id="s-stp" class="std-range" min="5" max="12" value="10" oninput="onSlide()">
+        </div>
+      </div>
+    </div>
+    <hr class="div">
+    <!-- Contrast -->
+    <div>
+      <div class="sec-label">Contrast Check</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="swatch-btn" id="btn-bg1" style="background:#ffffff" onclick="openPicker('bg1',this,event)"></button>
+        <span style="font-size:14px;color:var(--t2)">Background 1</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+        <button class="swatch-btn" id="btn-bg2" style="background:#111111" onclick="openPicker('bg2',this,event)"></button>
+        <span style="font-size:14px;color:var(--t2)">Background 2</span>
+      </div>
+    </div>
+  </div>
+</aside>
+<main id="main"></main>
+</div>
+
+<!-- Color Picker -->
+<div id="cp-popover" class="cp-popover" onclick="event.stopPropagation()">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:15px;font-weight:600">Color</span>
+    <button onclick="closePicker()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px">✕</button>
+  </div>
+  <div class="cp-row"><span class="cp-lbl">H</span><input type="range" id="cp-h" min="0" max="360" class="cp-slider" oninput="updateCP()"></div>
+  <div class="cp-row"><span class="cp-lbl">S</span><input type="range" id="cp-s" min="0" max="100" class="cp-slider" oninput="updateCP()"></div>
+  <div class="cp-row"><span class="cp-lbl">V</span><input type="range" id="cp-v" min="0" max="100" class="cp-slider" oninput="updateCP()"></div>
+  <div style="display:flex;gap:8px;margin-top:2px">
+    <input type="text" id="cp-hex" onchange="updateCPFromHex()" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:14px;padding:5px 7px;border:1px solid var(--inp-b);border-radius:4px;background:var(--inp);color:var(--t1)">
+    <div id="cp-preview" style="width:26px;border-radius:4px;border:1px solid rgba(0,0,0,.1)"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════ MATH
+// ── HCT Color Space (Google Material Color Utilities) ──────
+// Stable neutral tinting: works correctly at any lightness
+function _matMul(row,m){return[row[0]*m[0][0]+row[1]*m[0][1]+row[2]*m[0][2],row[0]*m[1][0]+row[1]*m[1][1]+row[2]*m[1][2],row[0]*m[2][0]+row[1]*m[2][1]+row[2]*m[2][2]]}
+function _sanDeg(d){d=d%360;return d<0?d+360:d}
+function _sgn(x){return x<0?-1:x>0?1:0}
+function _lin(c8){const c=c8/255;return(c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4))*100}
+function _delin(lin){const c=lin/100;const d=c<=0.0031308?c*12.92:1.055*Math.pow(c,1/2.4)-0.055;return Math.round(Math.max(0,Math.min(255,d*255)))}
+function _yFromL(l){const c=(l+16)/116;return 100*(c*c*c>0.008856452?c*c*c:(c-16/116)/7.787037)}
+function _lFromY(y){const t=y/100;return 116*(t>0.008856452?Math.cbrt(t):7.787037*t+16/116)-16}
+function _lFromArgb(a){const r=_lin((a>>16)&255),g=_lin((a>>8)&255),b=_lin(a&255);return _lFromY(0.2126*r+0.7152*g+0.0722*b)}
+function _hexFromArgb(a){const r=(a>>16)&255,g=(a>>8)&255,b=a&255;return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}
+function _argbFromHex(h){return(255<<24)|parseInt(h.replace('#',''),16)}
+function _argbFromLstar(l){const y=_yFromL(l)/100;const v=Math.round(Math.max(0,Math.min(255,(y<=0.0031308?y*12.92:1.055*Math.pow(y,1/2.4)-0.055)*255)));return(255<<24)|((v&255)<<16)|((v&255)<<8)|(v&255)}
+function _argbFromLin(r,g,b){return(255<<24)|((_delin(r)&255)<<16)|((_delin(g)&255)<<8)|(_delin(b)&255)}
+
+// Build default viewing conditions once
+const _VC=(()=>{
+  const wp=[95.047,100,108.883];
+  const rW=wp[0]*.401288+wp[1]*.650173+wp[2]*-.051461,gW=wp[0]*-.250268+wp[1]*1.204414+wp[2]*.045854,bW=wp[0]*-.002079+wp[1]*.048952+wp[2]*.953127;
+  const aL=(200/Math.PI)*_yFromL(50)/100,f=1.0,c=0.69,dc=Math.max(0,Math.min(1,f*(1-(1/3.6)*Math.exp((-aL-42)/92))));
+  const rgbD=[dc*(100/rW)+1-dc,dc*(100/gW)+1-dc,dc*(100/bW)+1-dc];
+  const k=1/(5*aL+1),k4=k**4,k4f=1-k4,fl=k4*aL+.1*k4f*k4f*Math.pow(5*aL,1/3);
+  const n=_yFromL(50)/wp[1],z=1.48+Math.sqrt(n),nbb=.725/Math.pow(n,.2);
+  const rf=[rW,gW,bW].map((w,i)=>Math.pow((fl*rgbD[i]*w)/100,.42));
+  const rgbA=rf.map(x=>(400*x)/(x+27.13));
+  return{n,aw:(2*rgbA[0]+rgbA[1]+.05*rgbA[2])*nbb,nbb,ncb:nbb,c,nc:1,rgbD,fl,flRoot:Math.pow(fl,.25),z};
+})();
+
+function _ca(c){const af=Math.pow(Math.abs(c),.42);return _sgn(c)*400*af/(af+27.13)}
+function _cam16(argb){
+  const r=_lin((argb>>16)&255),g=_lin((argb>>8)&255),b=_lin(argb&255);
+  const x=.41233895*r+.35762064*g+.18051042*b,y=.2126*r+.7152*g+.0722*b,z=.01932141*r+.11916382*g+.95034478*b;
+  const rC=.401288*x+.650173*y-.051461*z,gC=-.250268*x+1.204414*y+.045854*z,bC=-.002079*x+.048952*y+.953127*z;
+  const rA=_ca(_VC.rgbD[0]*rC),gA=_ca(_VC.rgbD[1]*gC),bA=_ca(_VC.rgbD[2]*bC);
+  const a=(11*rA-12*gA+bA)/11,bb=(rA+gA-2*bA)/9,u=(20*rA+20*gA+21*bA)/20,p2=(40*rA+20*gA+bA)/20;
+  const hue=_sanDeg(Math.atan2(bb,a)*180/Math.PI),hRad=hue*Math.PI/180;
+  const ac=p2*_VC.nbb,j=100*Math.pow(ac/_VC.aw,_VC.c*_VC.z);
+  const hp=hue<20.14?hue+360:hue,eH=.25*(Math.cos(hp*Math.PI/180+2)+3.8);
+  const p1=(50000/13)*eH*_VC.nc*_VC.ncb,t=p1*Math.sqrt(a*a+bb*bb)/(u+.305);
+  return{hue,chroma:Math.pow(t,.9)*Math.pow(1.64-Math.pow(.29,_VC.n),.73)*Math.sqrt(j/100),j};
+}
+
+const _SD=[[.001200833568784504,.002389694492170889,.0002795742885861124],[.0005891086651375999,.0029785502573438758,.0003270666104008398],[.00010146692491640572,.0005364214359186694,.0032979401770712076]];
+const _LS=[[1373.2198709594231,-1100.4251190754821,-7.278681089101213],[-271.815969077903,559.6580465940733,-32.46047482791194],[1.9622899599665666,-57.173814538844006,308.7233197812385]];
+const _YL=[.2126,.7152,.0722];
+const _CP=[0.015176349177441876,0.045529047532325624,0.07588174588720938,0.10623444424209313,0.13658714259697685,0.16693984095186062,0.19729253930674434,0.2276452376616281,0.2579979360165119,0.28835063437139563,0.3188300904430532,0.350925934958123,0.3848314933096426,0.42057480301049466,0.458183274052838,0.4976837250274023,0.5391024159806381,0.5824650784040898,0.6277969426914107,0.6751227633498623,0.7244668422128921,0.775853049866786,0.829304845476233,0.8848452951698498,0.942497089126609,1.0022825574869039,1.0642236851973577,1.1283421258858297,1.1946592148522128,1.2631959812511864,1.3339731595349034,1.407011200216447,1.4823302800086415,1.5599503113873272,1.6398909516233677,1.7221716113234105,1.8068114625156377,1.8938294463134073,1.9832442801866852,2.075074464868551,2.1693382909216234,2.2660538449872063,2.36523901573795,2.4669114995532007,2.5710888059345764,2.6777882626779785,2.7870270208169257,2.898822059350997,3.0131901897720907,3.1301480604002863,3.2497121605402226,3.3718988244681087,3.4967242352587946,3.624204428461639,3.754355295633311,3.887192587735158,4.022731918402185,4.160988767090289,4.301978482107941,4.445716283538092,4.592217266055746,4.741496401646282,4.893568542229298,5.048448422192488,5.20615066083972,5.3666897647573375,5.5300801301023865,5.696336044816294,5.865471690767354,6.037501145825082,6.212438385869475,6.390297286737924,6.571091626112461,6.7548350853498045,6.941541251256611,7.131223617812143,7.323895587840543,7.5195704746346665,7.7182615035334345,7.919981813454504,8.124744458384042,8.332562408825165,8.543448553206703,8.757415699253682,8.974476575321063,9.194643831691977,9.417930041841839,9.644347703669503,9.873909240696694,10.106627003236781,10.342513269534024,10.58158024687427,10.8238400726681,11.069304815507364,11.317986476196008,11.569896988756009,11.825048221409341,12.083451977536606,12.345119996613247,12.610063955123938,12.878295467455942,13.149826086772048,13.42466730586372,13.702830557985108,13.984327217668513,14.269168601521828,14.55736596900856,14.848930523210871,15.143873411576273,15.44220572664832,15.743938506781891,16.04908273684337,16.35764934889634,16.66964922287304,16.985093187232053,17.30399201960269,17.62635644741625,17.95219714852476,18.281524751807332,18.614349837764564,18.95068293910138,19.290534541298456,19.633915083172692,19.98083495742689,20.331304511189067,20.685334046541502,21.042933821039977,21.404114048223256,21.76888489811322,22.137256497705877,22.50923893145328,22.884842241736916,23.264076429332462,23.6469514538663,24.033477234264016,24.42366364919083,24.817520537484558,25.21505769858089,25.61628489293138,26.021211842414342,26.429848230738664,26.842203703840827,27.258287870275353,27.678110301598522,28.10168053274597,28.529008062403893,28.96010235337422,29.39497283293396,29.83362889318845,30.276079891419332,30.722335150426627,31.172403958865512,31.62629557157785,32.08401920991837,32.54558406207592,33.010999283389665,33.4802739966603,33.953417292456834,34.430438229418264,34.911345834551085,35.39614910352207,35.88485700094671,36.37747846067349,36.87402238606382,37.37449765026789,37.87891309649659,38.38727753828926,38.89959975977785,39.41588851594697,39.93615253289054,40.460400508064545,40.98864111053629,41.520882981230194,42.05713473317016,42.597404951718396,43.141702194811224,43.6900349931913,44.24241185063697,44.798841244188324,45.35933162437017,45.92389141541209,46.49252901546552,47.065252796817916,47.64207110610409,48.22299226451468,48.808024568002054,49.3971762874833,49.9904556690408,50.587870934119984,51.189430279724725,51.79514187861014,52.40501387947288,53.0190544071392,53.637271562750364,54.259673423945976,54.88626804504493,55.517063457223934,56.15206766869424,56.79128866487574,57.43473440856916,58.08241284012621,58.734331877617365,59.39049941699807,60.05092333227251,60.715611475655585,61.38457167773311,62.057811747619894,62.7353394731159,63.417162620860914,64.10328893648692,64.79372614476921,65.48848194977529,66.18756403501224,66.89098006357258,67.59873767827808,68.31084450182222,69.02730813691093,69.74813616640164,70.47333615344107,71.20291564160104,71.93688215501312,72.67524319850172,73.41800625771542,74.16517879925733,74.9167682708136,75.67278210128072,76.43322770089146,77.1981124613393,77.96744375590167,78.74122893956174,79.51947534912904,80.30219030335869,81.08938110306934,81.88105503125999,82.67721935322541,83.4778813166706,84.28304815182372,85.09272707154808,85.90692527145302,86.72564993000343,87.54890820862819,88.3767072518277,89.2090541872801,90.04595612594655,90.88742016217518,91.73345337380438,92.58406282226491,93.43925555268066,94.29903859396902,95.16341895893969,96.03240364439274,96.9059996312159,97.78421388448044,98.6670533535366,99.55452497210776];
+function _sanRad(a){return(a+8*Math.PI)%(2*Math.PI)}
+function _tDelin(c){const n=c/100;return(n<=0.0031308?n*12.92:1.055*Math.pow(n,1/2.4)-0.055)*255}
+function _hueOf(lr){const sd=_matMul(lr,_SD),rA=_ca(sd[0]),gA=_ca(sd[1]),bA=_ca(sd[2]);return Math.atan2((rA+gA-2*bA)/9,(11*rA-12*gA+bA)/11)}
+function _cyclic(a,b,c){return _sanRad(b-a)<_sanRad(c-a)}
+function _nthV(y,n){const[kr,kg,kb]=_YL,cA=n%4<=1?0:100,cB=n%2===0?0:100;if(n<4){const r=(y-cA*kg-cB*kb)/kr;return(r>=0&&r<=100)?[r,cA,cB]:null}if(n<8){const g=(y-cB*kr-cA*kb)/kg;return(g>=0&&g<=100)?[cB,g,cA]:null}const b=(y-cA*kr-cB*kg)/kb;return(b>=0&&b<=100)?[cA,cB,b]:null}
+function _bisectSeg(y,tH){let L=null,R=null,lH=0,rH=0,init=false,uncut=true;for(let n=0;n<12;n++){const mid=_nthV(y,n);if(!mid)continue;const mH=_hueOf(mid);if(!init){L=R=mid;lH=rH=mH;init=true;continue}if(uncut||_cyclic(lH,mH,rH)){uncut=false;if(_cyclic(lH,tH,mH)){R=mid;rH=mH}else{L=mid;lH=mH}}}return[L||[0,0,0],R||[0,0,0]]}
+function _bisectLim(y,tH){let[L,R]=_bisectSeg(y,tH),lH=_hueOf(L);for(let ax=0;ax<3;ax++){if(L[ax]===R[ax])continue;let lP,rP;if(L[ax]<R[ax]){lP=Math.floor(_tDelin(L[ax])-.5);rP=Math.ceil(_tDelin(R[ax])-.5)}else{lP=Math.ceil(_tDelin(L[ax])-.5);rP=Math.floor(_tDelin(R[ax])-.5)}for(let i=0;i<8;i++){if(Math.abs(rP-lP)<=1)break;const mP=Math.floor((lP+rP)/2),mC=_CP[mP],t=(mC-L[ax])/(R[ax]-L[ax]),mid=L.map((v,i)=>v+(R[i]-v)*t),mH=_hueOf(mid);if(_cyclic(lH,tH,mH)){R=mid;rP=mP}else{L=mid;lH=mH;lP=mP}}}return L.map((v,i)=>(v+R[i])/2)}
+function _invCA(a){const aa=Math.abs(a),base=Math.max(0,27.13*aa/(400-aa));return _sgn(a)*Math.pow(base,1/.42)}
+function _findByJ(hR,ch,y){let j=Math.sqrt(y)*11;const tIC=1/Math.pow(1.64-Math.pow(.29,_VC.n),.73),eH=.25*(Math.cos(hR+2)+3.8),p1=eH*(50000/13)*_VC.nc*_VC.ncb,hS=Math.sin(hR),hC=Math.cos(hR);for(let i=0;i<5;i++){const jN=j/100,alpha=(ch!==0&&j!==0)?ch/Math.sqrt(jN):0,t=Math.pow(alpha*tIC,1/.9),ac=_VC.aw*Math.pow(jN,1/_VC.c/_VC.z),p2=ac/_VC.nbb,g=23*(p2+.305)*t/(23*p1+11*t*hC+108*t*hS),a=g*hC,b=g*hS,rA=(460*p2+451*a+288*b)/1403,gA=(460*p2-891*a-261*b)/1403,bA=(460*p2-220*a-6300*b)/1403,lr=_matMul([_invCA(rA),_invCA(gA),_invCA(bA)],_LS);if(lr[0]<0||lr[1]<0||lr[2]<0)return 0;const fnj=_YL[0]*lr[0]+_YL[1]*lr[1]+_YL[2]*lr[2];if(fnj<=0)return 0;if(i===4||Math.abs(fnj-y)<.002){if(lr[0]>100.01||lr[1]>100.01||lr[2]>100.01)return 0;return _argbFromLin(lr[0],lr[1],lr[2])}j=j-(fnj-y)*j/(2*fnj)}return 0}
+
+// Public HCT API
+function hctFromHex(hex){const a=_argbFromHex(hex),cam=_cam16(a);return{hue:cam.hue,chroma:cam.chroma,tone:_lFromArgb(a)}}
+function hexFromHct(hue,chroma,tone){
+  if(chroma<0.0001||tone<0.0001||tone>99.9999)return _hexFromArgb(_argbFromLstar(tone));
+  hue=_sanDeg(hue);const hR=hue*Math.PI/180,y=_yFromL(tone);
+  const exact=_findByJ(hR,chroma,y);
+  if(exact!==0)return _hexFromArgb(exact);
+  const lr=_bisectLim(y,hR);
+  return _hexFromArgb(_argbFromLin(lr[0],lr[1],lr[2]));
+}
+// ── End HCT ────────────────────────────────────────────────
+
+function hsvToHex(h,s,v){s/=100;v/=100;let c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c,r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}const t=x=>Math.round((x+m)*255).toString(16).padStart(2,'0');return`#${t(r)}${t(g)}${t(b)}`}
+function hexToHsv(hex){let r=parseInt(hex.substr(1,2),16)/255,g=parseInt(hex.substr(3,2),16)/255,b=parseInt(hex.substr(5,2),16)/255,max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min,h=0,s=max===0?0:d/max,v=max;if(max!==min){if(max===r)h=(g-b)/d+(g<b?6:0);else if(max===g)h=(b-r)/d+2;else h=(r-g)/d+4;h/=6}return[Math.round(h*360),Math.round(s*100),Math.round(v*100)]}
+const lin=c=>{c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4)};
+const delin=c=>{c=Math.max(0,Math.min(1,c));return Math.round((c<=0.0031308?c*12.92:1.055*Math.pow(c,1/2.4)-0.055)*255)};
+const h2r=h=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');const n=parseInt(h,16);return[n>>16&255,n>>8&255,n&255]};
+const r2h=(r,g,b)=>'#'+[r,g,b].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+const toXyz=(r,g,b)=>{r=lin(r);g=lin(g);b=lin(b);return[r*.4124564+g*.3575761+b*.1804375,r*.2126729+g*.7151522+b*.0721750,r*.0193339+g*.1191920+b*.9503041]};
+const toOklab=(x,y,z)=>{const l=Math.cbrt(.8189330101*x+.3618667424*y-.1288597137*z),m=Math.cbrt(.0329845436*x+.9293118715*y+.0361456387*z),s=Math.cbrt(.0482003018*x+.2643662691*y+.6338517070*z);return[.2104542553*l+.7936177850*m-.0040720468*s,1.9779984951*l-2.4285922050*m+.4505937099*s,.0259040371*l+.7827717662*m-.8086757660*s]};
+const fromOklab=(L,a,b)=>{const l_=L+.3963377774*a+.2158037573*b,m_=L-.1055613458*a-.0638541728*b,s_=L-.0894841775*a-1.2914855480*b,l=l_**3,m=m_**3,s=s_**3;return[4.0767416621*l-3.3077115913*m+.2309699292*s,-1.2684380046*l+2.6097574011*m-.3413193965*s,-.0041960863*l-.7034186147*m+1.7076147010*s]};
+const toRgbLin=(x,y,z)=>[x*3.2404542-y*1.5371385-z*0.4985314,-x*0.9692660+y*1.8760108+z*0.0415560,x*0.0556434-y*0.2040259+z*1.0572252];
+function hexToOklch(hex){const[r,g,b]=h2r(hex),xyz=toXyz(r,g,b),[L,a,ob]=toOklab(...xyz);return[L,Math.sqrt(a*a+ob*ob),(Math.atan2(ob,a)*180/Math.PI+360)%360]}
+function oklchToHex(L,C,H){
+  if(L<=0.001)return'#000000';if(L>=0.999)return'#ffffff';
+  if(C<0.001){const v=delin(Math.max(0,Math.min(1,L)));return r2h(v,v,v)}
+  const rlin=c=>{const a=c*Math.cos(H*Math.PI/180),b=c*Math.sin(H*Math.PI/180);return toRgbLin(...fromOklab(L,a,b))};
+  const ok=c=>{const[r,g,b]=rlin(c);return r>=-0.001&&r<=1.001&&g>=-0.001&&g<=1.001&&b>=-0.001&&b<=1.001};
+  let lo=0,hi=C;if(ok(hi)){lo=hi}else{for(let i=0;i<20;i++){const m=(lo+hi)/2;if(ok(m))lo=m;else hi=m}}
+  const[rl,gl,bl]=rlin(lo);return r2h(delin(rl),delin(gl),delin(bl))
+}
+function maxC(L,H){let lo=0,hi=0.4;for(let i=0;i<20;i++){const m=(lo+hi)/2,a=m*Math.cos(H*Math.PI/180),b=m*Math.sin(H*Math.PI/180),[r,g,bl]=toRgbLin(...fromOklab(L,a,b));(r>=-0.001&&r<=1.001&&g>=-0.001&&g<=1.001&&bl>=-0.001&&bl<=1.001)?lo=m:hi=m}return lo}
+// APCA-W3 0.0.98G — Advanced Perceptual Contrast Algorithm (WCAG 3.0 candidate)
+// |Lc|≥75 normal text, ≥60 large/bold text, ≥45 large text only, <45 decorative
+function apcaY(hex){
+  const[r,g,b]=h2r(hex);
+  return 0.2126729*lin(r)+0.7151522*lin(g)+0.0721750*lin(b);
+}
+function apca(txtHex,bgHex){
+  const Rtxt=apcaY(txtHex),Rbg=apcaY(bgHex);
+  const Ntxt=0.57,Nbg=0.56,Sapc=1.14,Ofloor=0.1,Wb=0.03,Sc=1.618;
+  const Yt=Math.max(Rtxt,0),Yb=Math.max(Rbg,0);
+  const Ytc=Yt>Wb?Yt:Yt+Math.pow(Wb-Yt,1.33)/Sc;
+  const Ybc=Yb>Wb?Yb:Yb+Math.pow(Wb-Yb,1.33)/Sc;
+  const Lc=(Math.pow(Ybc,Nbg)-Math.pow(Ytc,Ntxt))*Sapc;
+  return Math.abs(Lc)<Ofloor?0:Lc*100;
+}
+// cr: pick readable text color — returns higher |Lc| contrast option
+function cr(bg,a,b){return Math.abs(apca(a,bg))>=Math.abs(apca(b,bg))?a:b}
+
+// ══════════════════════════════════════════ SHADE ENGINE
+const STEPS=[50,100,200,300,400,500,600,700,800,900,950];
+function pickIdx(n){const m={5:[0,2,5,8,10],6:[0,1,3,5,7,10],7:[0,1,3,5,6,8,10],8:[0,1,2,4,5,7,8,10],9:[0,1,2,4,5,6,7,9,10],10:[0,1,2,3,4,5,6,7,9,10],11:[0,1,2,3,4,5,6,7,8,9,10],12:[0,1,2,3,4,5,6,7,8,9,10,10]};return m[Math.min(12,Math.max(5,n))]??m[10]}
+
+function hexToHsl(hex){
+  let r=parseInt(hex.substr(1,2),16)/255,g=parseInt(hex.substr(3,2),16)/255,b=parseInt(hex.substr(5,2),16)/255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),l=(max+min)/2;
+  if(max===min)return[0,0,l];
+  const d=max-min,s=l>0.5?d/(2-max-min):d/(max+min);
+  let h=0;
+  if(max===r)h=(g-b)/d+(g<b?6:0);
+  else if(max===g)h=(b-r)/d+2;
+  else h=(r-g)/d+4;
+  return[h*60,s,l];
+}
+
+// Convert HSL hue (0-360) to OKLCH hue by sampling a mid-saturation colour
+function makeShades(srcHex, cf, lockHue, nSteps, Lshift, cScale, tShift, fixedL=null, hueShift=0){
+  const[bL,bC,bH]=hexToOklch(srcHex);
+  const chroma=bC>=0.015;
+  const anchorL = fixedL !== null
+    ? Math.max(0.05, Math.min(0.97, fixedL + Lshift*0.3))
+    : Math.max(0.08, Math.min(0.92, bL+Lshift));
+  const midL = anchorL;
+
+  // NEUTRAL ROLES: use HCT for stable tinting at any lightness.
+  let neutralHue=0, neutralChroma=0;
+  if(fixedL !== null){
+    const {hue: brandHue} = hctFromHex(srcHex);
+    const tNorm = tShift / 50; 
+    const pole = tNorm < 0 ? 220 : 30; 
+    const tAbs = Math.abs(tNorm);
+    const dH = ((pole - brandHue + 540) % 360) - 180;
+    neutralHue = (brandHue + dH * tAbs + 360) % 360;
+    const brandC = hctFromHex(srcHex).chroma;
+    const brandBoost = Math.min(brandC / 40, 1) * 2; 
+    neutralChroma = Math.max(0, (cScale - 0.1) / 1.7 * 8 + brandBoost);
+  }
+
+  return pickIdx(nSteps).map(idx=>{
+    let L;
+    if(idx===5)L=midL;
+    else if(idx<5){const t=(5-idx)/5;L=midL+t*(0.97-midL)}
+    else{const t=(idx-5)/5;L=midL-t*(midL-0.03)}
+    L=Math.max(0.03,Math.min(0.97,L));
+
+    if(fixedL !== null){
+      const tone = Math.max(0.1, Math.min(99.9, L * 100));
+      return{step:STEPS[idx], hex: hexFromHct(neutralHue, neutralChroma, tone)};
+    }
+
+    if(!chroma||cf===0)return{step:STEPS[idx],hex:oklchToHex(L,0,0)};
+    let finalH = bH;
+    if(hueShift !== 0){
+      const srcHct = hctFromHex(srcHex);
+      const hctH = (srcHct.hue + hueShift + 360) % 360;
+      const sampHex = hexFromHct(hctH, Math.min(srcHct.chroma, 40), 55);
+      finalH = hexToOklch(sampHex)[2];
+    }
+    const H = lockHue ? bH : ((finalH + tShift) + 360) % 360;
+    const effC=bC*cf*cScale;
+    return{step:STEPS[idx],hex:oklchToHex(L,Math.min(effC,maxC(L,H)),H)};
+  });
+}
+// ── Semantic shade engine ───────────────────────────────────
+// Semantic roles use fixed HCT hue (always red/yellow/green/blue)
+function makeSemanticShades(fixedHue, brandHex, nSteps, Lshift, cScale){
+  const {chroma: brandC} = hctFromHex(brandHex);
+  // Base chroma 40, brand adds up to +12, Arousal scales the result
+  const baseC = 40 + Math.min(brandC / 150, 1) * 12;
+  const semC = Math.max(10, baseC * cScale);
+  // Mid tone: 50 shifted by Valence (±10 tone units)
+  const midTone = Math.max(20, Math.min(80, 50 + Lshift * 40));
+  return pickIdx(nSteps).map(idx => {
+    let tone;
+    if(idx === 5) tone = midTone;
+    else if(idx < 5){ const t=(5-idx)/5; tone = midTone + t*(97-midTone); }
+    else{ const t=(idx-5)/5; tone = midTone - t*(midTone-3); }
+    tone = Math.max(3, Math.min(97, tone));
+    return { step: STEPS[idx], hex: hexFromHct(fixedHue, semC, tone) };
+  });
+}
+
+// ══════════════════════════════════════════ STATE PERSISTENCE
+// Auto-save to browser storage
+function persistState() {
+  const state = {
+    sliders: {
+      val: document.getElementById('s-val').value,
+      aro: document.getElementById('s-aro').value,
+      tmp: document.getElementById('s-tmp').value,
+      stp: document.getElementById('s-stp').value
+    },
+    aiText: document.getElementById('aiText') ? document.getElementById('aiText').value : '',
+    sources: sources,
+    roleState: roleState,
+    exportSteps: exportSteps,
+    ctBg1: ctBg1,
+    ctBg2: ctBg2
+  };
+  localStorage.setItem('paletteStudioState', JSON.stringify(state));
+}
+
+// Restore data
+function loadState() {
+  const saved = localStorage.getItem('paletteStudioState');
+
+  // If no data (first launch), render default state
+  if (!saved) {
+    renderSources();
+    renderRoleGroups();
+    rebuild();
+    return;
+  }
+  
+  try {
+    const state = JSON.parse(saved);
+
+    sources = state.sources || sources;
+    roleState = state.roleState || roleState;
+    exportSteps = state.exportSteps || exportSteps;
+    ctBg1 = state.ctBg1 || ctBg1;
+    ctBg2 = state.ctBg2 || ctBg2;
+    
+    if (document.getElementById('aiText')) {
+        document.getElementById('aiText').value = state.aiText || '';
+    }
+
+    // Restore sliders
+    if (state.sliders) {
+      document.getElementById('s-val').value = state.sliders.val;
+      document.getElementById('s-aro').value = state.sliders.aro;
+      document.getElementById('s-tmp').value = state.sliders.tmp;
+      document.getElementById('s-stp').value = state.sliders.stp;
+    }
+    
+    // Render based on loaded data
+    onSlide(); 
+    renderSources();
+    renderRoleGroups();
+    rebuild();
+    
+    // Update contrast visual buttons
+    document.getElementById('btn-bg1').style.background = ctBg1;
+    document.getElementById('btn-bg2').style.background = ctBg2;
+    
+  } catch (e) {
+    console.error("Failed to load state", e);
+    // In case of parsing error - render default state too
+    renderSources();
+    renderRoleGroups();
+    rebuild();
+  }
+}
+
+// ══════════════════════════════════════════ INITIALIZATION & GLOBALS
+// Color Sources — independent brand colors
+let sources=[
+  {id:'s1',name:'Primary', hex:'#3b5bdb'},
+  {id:'s2',name:'Accent',  hex:'#e64980'},
+];
+
+// Role definitions — the full catalog
+// enabled: user can toggle on/off individually
+// group: which collapsible group it belongs to
+// cf: chromaFactor, lock: lockHue, fixed: override hex entirely
+const ROLE_CATALOG =[
+  {id:'rc-pri',  group:'core',     name:'Primary',       desc:'Main brand action',    cf:1.0,  lock:false, defaultOn:true,  srcIdx:0},
+  {id:'rc-sec',  group:'core',     name:'Secondary',     desc:'Supporting brand',     cf:0.35, lock:false, defaultOn:true,  srcIdx:0, hueShift:60},
+  {id:'rc-bg',   group:'neutral',  name:'Background',    desc:'Page/canvas',          cf:0.03, lock:false, defaultOn:true,  srcIdx:0, fixedL:0.97},
+  {id:'rc-surf', group:'neutral',  name:'Surface',       desc:'Cards, panels',        cf:0.05, lock:false, defaultOn:true,  srcIdx:0, fixedL:0.93},
+  {id:'rc-bord', group:'neutral',  name:'Border',        desc:'Dividers, outlines',   cf:0.10, lock:false, defaultOn:false, srcIdx:0, fixedL:0.78},
+  {id:'rc-txt',  group:'neutral',  name:'Text',          desc:'Body copy',            cf:0.05, lock:false, defaultOn:true,  srcIdx:0, fixedL:0.22},
+  {id:'rc-txts', group:'neutral',  name:'Text Subtle',   desc:'Captions, hints',      cf:0.07, lock:false, defaultOn:false, srcIdx:0, fixedL:0.52},
+  {id:'rc-ac1',  group:'accent',   name:'Accent 1',      desc:'Category / rubric',    cf:1.0,  lock:false, defaultOn:true,  srcIdx:1},
+  {id:'rc-ac2',  group:'accent',   name:'Accent 2',      desc:'Category / rubric',    cf:1.0,  lock:false, defaultOn:false, srcIdx:2},
+  {id:'rc-ac3',  group:'accent',   name:'Accent 3',      desc:'Category / rubric',    cf:1.0,  lock:false, defaultOn:false, srcIdx:3},
+  {id:'rc-err',  group:'semantic', name:'Error',         desc:'Destructive / danger', cf:1.0,  lock:true,  defaultOn:false, fixedHue:25},
+  {id:'rc-warn', group:'semantic', name:'Warning',       desc:'Caution',              cf:1.0,  lock:true,  defaultOn:false, fixedHue:57},
+  {id:'rc-ok',   group:'semantic', name:'Success',       desc:'Positive / done',      cf:1.0,  lock:true,  defaultOn:false, fixedHue:147},
+  {id:'rc-info', group:'semantic', name:'Info',          desc:'Informational',        cf:1.0,  lock:true,  defaultOn:false, fixedHue:255},
+  {id:'rc-hl',   group:'extended', name:'Highlight',     desc:'Pullquote, plaque',    cf:1.0,  lock:false, defaultOn:false, srcIdx:0},
+  {id:'rc-onp',  group:'extended', name:'On Primary',    desc:'Text over primary',    cf:0.0,  lock:true,  defaultOn:false, fixed:'#ffffff'},
+];
+
+const GROUP_META = {
+  core:     {label:'Core',     desc:'Always needed'},
+  neutral:  {label:'Neutrals', desc:'Space & text'},
+  accent:   {label:'Accents',  desc:'Categories, rubrics'},
+  semantic: {label:'Semantic', desc:'States (app/web)'},
+  extended: {label:'Extended', desc:'Print & brand'},
+};
+
+// Per-role runtime state: enabled, sourceId override
+// sourceId=null means "use catalog srcIdx dynamically"
+let roleState = {};
+ROLE_CATALOG.forEach(r=>{
+  roleState[r.id]={
+    enabled: r.defaultOn,
+    sourceId: null, 
+  };
+});
+
+let exportFmt='css', uid=20, activeCPId=null, exportSteps={};
+let ctBg1='#ffffff', ctBg2='#111111';
+let prevBg='rc-bg', prevBtn1='rc-pri', prevBtn2='rc-ac1', prevTxt='rc-txt', prevTxtS='rc-txts', prevStep=500;
+
+function getSliders(){
+  const val=+document.getElementById('s-val').value;
+  const aro=+document.getElementById('s-aro').value;
+  const tmp=+document.getElementById('s-tmp').value;
+  const stp=+document.getElementById('s-stp').value;
+  const Lshift=(val/50)*0.20;
+  const C=aro>=0?1.0+(aro/50)*0.8:0.1+0.9*((aro+50)/50);
+  const T=(tmp/50)*30;
+  return{Lshift,C,T,S:stp};
+}
+
+function activeRoles(){
+  return ROLE_CATALOG.filter(r=>roleState[r.id]?.enabled);
+}
+
+function srcForRole(r){
+  if(r.fixed) return {hex:r.fixed};
+  const override = roleState[r.id]?.sourceId;
+  if(override){
+    const found = sources.find(s=>s.id===override);
+    if(found) return found;
+  }
+  const byIdx = sources[r.srcIdx??0];
+  return byIdx || sources[0];
+}
+
+// ══════════════════════════════════════════ RENDER SOURCES
+function renderSources(){
+  document.getElementById('sourcesList').innerHTML=sources.map(s=>`
+    <div class="source-item" data-id="${s.id}">
+      <button class="swatch-btn" style="background:${s.hex}" onclick="openPicker('${s.id}',this,event)"></button>
+      <input class="source-name-in" value="${s.name}" onchange="renameSource('${s.id}',this.value)">
+      <button class="icon-btn del-btn" onclick="delSource('${s.id}')">×</button>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════ RENDER ROLE GROUPS
+function renderRoleGroups(){
+  const groups =['core','neutral','accent','semantic','extended'];
+  document.getElementById('roleGroups').innerHTML = groups.map(gid=>{
+    const meta = GROUP_META[gid];
+    const gRoles = ROLE_CATALOG.filter(r=>r.group===gid);
+    const enabledCount = gRoles.filter(r=>roleState[r.id]?.enabled).length;
+    const allOn = enabledCount===gRoles.length;
+    const someOn = enabledCount>0 && !allOn;
+    const checkCls = allOn?'on':someOn?'partial':'';
+    const srcOpts = sources.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+
+    const roleRows = gRoles.map(r=>{
+      const st=roleState[r.id];
+      const src=srcForRole(r);
+      const[,bc,bh]=hexToOklch(src.hex);
+      const sw=oklchToHex(0.52,Math.min(bc*r.cf,maxC(0.52,bh)),bh);
+      const selVal=src.id || sources[0].id;
+      return`<div class="role-row${st.enabled?'':' disabled'}" data-rid="${r.id}">
+        <div class="role-check${st.enabled?' on':''}" onclick="toggleRole('${r.id}')"></div>
+        <div class="role-swatch" style="background:${sw}"></div>
+        <span class="role-label">${r.name}<span class="role-label-dim">${r.desc?'· '+r.desc:''}</span></span>
+        ${r.fixed
+          ? `<span style="font-size:12px;color:var(--t3);font-style:italic">fixed</span>`
+          : `<select class="role-src-sel" title="Source color" onchange="setRoleSrc('${r.id}',this.value)">
+              ${sources.map(s=>`<option value="${s.id}"${s.id===selVal?' selected':''}>${s.name}</option>`).join('')}
+             </select>`
+        }
+      </div>`;
+    }).join('');
+
+    return`<div class="role-group">
+      <div class="group-header" onclick="toggleGroup('${gid}')">
+        <div class="group-check ${checkCls}" onclick="event.stopPropagation();toggleGroupCheck('${gid}')"></div>
+        <span class="group-name">${meta.label}</span>
+        <span class="group-toggle">${meta.desc}</span>
+      </div>
+      <div class="group-roles" id="grp-${gid}">${roleRows}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleRole(id){
+  roleState[id].enabled=!roleState[id].enabled;
+  renderRoleGroups(); rebuild(); persistState();
+}
+function toggleGroupCheck(gid){
+  const gRoles=ROLE_CATALOG.filter(r=>r.group===gid);
+  const allOn=gRoles.every(r=>roleState[r.id]?.enabled);
+  gRoles.forEach(r=>{roleState[r.id].enabled=!allOn});
+  renderRoleGroups(); rebuild(); persistState();
+}
+function toggleGroup(gid){
+  const el=document.getElementById('grp-'+gid);
+  el.style.display=el.style.display==='none'?'':'none';
+}
+function setRoleSrc(id,sid){
+  if(roleState[id]) roleState[id].sourceId=sid; 
+  rebuild(); persistState();
+}
+function renameSource(id,val){
+  const s=sources.find(x=>x.id===id);
+  if(s) s.name=val; 
+  renderRoleGroups(); persistState();
+}
+
+// ══════════════════════════════════════════ REBUILD & SLIDERS
+function rebuild(){
+  const{Lshift,C,T,S}=getSliders();
+  renderMain();
+}
+
+function onSlide(){['val','aro','tmp','stp'].forEach(k=>{
+    document.getElementById('v-'+k).textContent=document.getElementById('s-'+k).value;
+  });
+  rebuild(); 
+  persistState(); // Call this on every change
+}
+
+function resetSliders(){
+  document.getElementById('s-val').value=0;
+  document.getElementById('s-aro').value=0;
+  document.getElementById('s-tmp').value=0;
+  document.getElementById('s-stp').value=10;
+  onSlide(); // will call persistState internally
+}
+
+// ══════════════════════════════════════════ SOURCE CRUD
+function addSource(){
+  const hues=[40,120,280,160,310,200,60,240];
+  const h=hues[sources.length%hues.length];
+  const id='s'+(uid++);
+  sources.push({id,name:'Color '+(uid-1),hex:oklchToHex(0.52,0.18,h)});
+  renderSources(); renderRoleGroups(); rebuild(); persistState();
+}
+function delSource(id){
+  if(sources.length<=1)return toast('Need at least one source');
+  sources=sources.filter(s=>s.id!==id);
+  Object.keys(roleState).forEach(rid=>{
+    if(roleState[rid].sourceId===id) roleState[rid].sourceId=null;
+  });
+  renderSources(); renderRoleGroups(); rebuild(); persistState();
+}
+
+// ══════════════════════════════════════════ RENDER MAIN
+function renderMain(){
+  const{Lshift,C,T,S}=getSliders();
+  const main=document.getElementById('main');
+  const active=activeRoles();
+  if(!active.length){main.innerHTML='<div style="display:flex;flex:1;align-items:center;justify-content:center;color:var(--t3);font-size:15px">Enable some roles to see palettes</div>';return}
+
+  const palData=active.map(r=>{
+    const catalogRole=ROLE_CATALOG.find(x=>x.id===r.id)||r;
+    let src, shades;
+    if(catalogRole.fixed){
+      src={hex:catalogRole.fixed};
+      shades=makeShades(src.hex,r.cf,r.lock,S,Lshift,C,T,catalogRole.fixedL??null,catalogRole.hueShift??0);
+    } else if(catalogRole.fixedHue !== undefined){
+      src=srcForRole(r);
+      shades=makeSemanticShades(catalogRole.fixedHue, src.hex, S, Lshift, C);
+    } else {
+      src=srcForRole(r);
+      shades=makeShades(src.hex,r.cf,r.lock,S,Lshift,C,T,catalogRole.fixedL??null,catalogRole.hueShift??0);
+    }
+    const mid=shades[Math.floor(shades.length/2)];
+    return{...r,src,shades,mid,group:catalogRole.group};
+  });
+
+  const groupOrder=['core','neutral','accent','semantic','extended'];
+  let html='';
+  groupOrder.forEach(gid=>{
+    const gPals=palData.filter(p=>p.group===gid);
+    if(!gPals.length)return;
+    html+=`<div class="group-section">
+      <div class="group-section-label">${GROUP_META[gid].label}</div>
+      ${gPals.map(p=>renderPalCard(p)).join('')}
+    </div>`;
+  });
+
+  const bgPal  = palData.find(p=>p.id===prevBg)  || palData.find(p=>p.group==='neutral') || palData[0];
+  const btn1Pal= palData.find(p=>p.id===prevBtn1) || palData[0];
+  const btn2Pal= palData.find(p=>p.id===prevBtn2) || palData[1]||palData[0];
+  const txtPal  = palData.find(p=>p.id===prevTxt)  || palData.find(p=>p.id==='rc-txt')  || palData.find(p=>p.group==='neutral'&&p.shades[0]?.hex) || btn1Pal;
+  const txtsPal = palData.find(p=>p.id===prevTxtS) || palData.find(p=>p.id==='rc-txts') || txtPal;
+  const mkOpts=(sel)=>palData.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${p.name}</option>`).join('');
+  if(bgPal){
+    const bgC=bgPal.shades[0]?.hex||'#fff';
+    const txtC=bgPal.shades[bgPal.shades.length-1]?.hex||'#000';
+    const getShadeByStep=(pal,step)=>pal.shades.find(s=>s.step===step)?.hex||pal.shades[Math.floor(pal.shades.length/2)]?.hex||'#888';
+    const b1C=getShadeByStep(btn1Pal,prevStep);
+    const b1T=cr(b1C,'#fff','#000');
+    const b2C=getShadeByStep(btn2Pal,prevStep);
+    const b2T=cr(b2C,'#fff','#000');
+    const subtleC=bgPal.shades[Math.floor(bgPal.shades.length*.65)]?.hex||'#666';
+    const txtC2  = txtPal.shades[txtPal.shades.length-1]?.hex  || txtC;
+    const txtsC2 = txtsPal.shades[Math.floor(txtsPal.shades.length*.55)]?.hex || subtleC;
+    const stepOpts=[50,100,200,300,400,500,600,700,800,900,950].map(s=>`<option value="${s}"${s===prevStep?' selected':''}>${s}</option>`).join('');
+    html+=`<div class="preview-card">
+      <div class="prev-lbl">Preview UI
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--t3)">
+          BG<select class="prev-select" onchange="prevBg=this.value;renderMain()">${mkOpts(prevBg)}</select>
+          Btn1<select class="prev-select" onchange="prevBtn1=this.value;renderMain()">${mkOpts(prevBtn1)}</select>
+          Btn2<select class="prev-select" onchange="prevBtn2=this.value;renderMain()">${mkOpts(prevBtn2)}</select>
+          Step<select class="prev-select" onchange="prevStep=+this.value;renderMain()">${stepOpts}</select>
+          Text<select class="prev-select" onchange="prevTxt=this.value;renderMain()">${mkOpts(prevTxt)}</select>
+          Subtle<select class="prev-select" onchange="prevTxtS=this.value;renderMain()">${mkOpts(prevTxtS)}</select>
+        </div>
+      </div>
+      <div class="prev-body"><div class="prev-inner" style="background:${bgC}">
+        <div class="prev-h" style="color:${txtC2}">Welcome to the experience</div>
+        <div class="prev-p" style="color:${txtsC2}">Subtle body text — captions, hints, secondary content.</div>
+        <div class="prev-btns">
+          <button class="prev-btn" style="background:${b1C};color:${b1T}">${btn1Pal.name}</button>
+          <button class="prev-btn" style="background:${b2C};color:${b2T}">${btn2Pal.name}</button>
+        </div>
+      </div></div>
+    </div>`;
+  }
+
+  html+=`<div class="export-card">
+    <div class="export-tabs">
+      <button class="etab${exportFmt==='css'?' on':''}" onclick="setFmt('css')">CSS</button>
+      <button class="etab${exportFmt==='tailwind'?' on':''}" onclick="setFmt('tailwind')">Tailwind</button>
+      <button class="etab${exportFmt==='json'?' on':''}" onclick="setFmt('json')">JSON</button>
+      <div style="flex:1"></div>
+      <button class="etab" onclick="exportToPenpot()" style="color:#5b6af5;font-weight:700;">✦ to Penpot</button>
+    </div>
+    <div class="export-code" id="exportCode">${genExport(palData)}</div>
+  </div>`;
+
+  main.innerHTML=html;
+}
+
+function renderPalCard(p) {
+  const catalogRole = ROLE_CATALOG.find(x => x.id === p.id) || p;
+  const srcLabel = catalogRole.fixed ? 'fixed' : srcForRole(catalogRole).name || '?';
+  // Initialize values if missing
+  if (!exportSteps[p.id]) exportSteps[p.id] = { light: p.shades[5]?.step || 500, dark: p.shades[5]?.step || 500 };
+
+  return `<div class="pal-card">
+    <div class="pal-head">
+      <div class="pal-head-l">
+        <div class="pal-dot" style="background:${p.mid?.hex||'#888'}"></div>
+        <div>
+          <div class="pal-name">${p.name} <span style="font-size:13px;color:var(--t3);font-style:italic">· ${srcLabel}</span></div>
+          <div style="display:flex;gap:4px;margin-top:2px">
+            <span class="pal-tag">C×${p.cf}</span>
+            ${p.lock?'<span class="pal-tag">locked</span>':''}
+            ${p.desc?`<span class="pal-tag">${p.desc}</span>`:''}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <select class="role-src-sel" onchange="exportSteps['${p.id}'].light = this.value; renderMain(); persistState()" title="Light theme shade">
+          <option value="none">Light: None</option>
+          ${p.shades.map(s => `<option value="${s.step}" ${exportSteps[p.id].light == s.step ? 'selected' : ''}>Light: ${s.step}</option>`).join('')}
+        </select>
+        <select class="role-src-sel" onchange="exportSteps['${p.id}'].dark = this.value; renderMain(); persistState()" title="Dark theme shade">
+          <option value="none">Dark: None</option>
+          ${p.shades.map(s => `<option value="${s.step}" ${exportSteps[p.id].dark == s.step ? 'selected' : ''}>Dark: ${s.step}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="shades-wrap">
+      ${p.shades.map(s => {
+        const lc1=apca(s.hex,ctBg1), lc2=apca(s.hex,ctBg2);
+        const badge=(lc,bg)=>{const a=Math.abs(lc);const cls=a>=75?'ct-aaa':a>=60?'ct-aa':'ct-fail';const lbl=a>=45?'Lc'+Math.round(a):'Lc'+Math.round(a);return`<div class="ct-row ${cls}"><div class="ct-dot" style="background:${bg}"></div>${lbl}</div>`};
+        const tc=cr(s.hex,'#fff','#111');
+        return `<div class="shade-col" onclick="copyT('${s.hex}')">
+          <div class="shade" style="background:${s.hex}">
+            <div class="sh-tip">${s.hex}</div>
+            <div class="sh-num" style="color:${tc}">${s.step}</div>
+          </div>
+          <div class="shade-ct">${badge(lc1,ctBg1)}${badge(lc2,ctBg2)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════ EXPORT
+function genExport(palData){
+  if(!palData){
+    const{Lshift,C,T,S}=getSliders();
+    palData=activeRoles().map(r=>{
+      const catalogRole=ROLE_CATALOG.find(x=>x.id===r.id)||r;
+      let src,shades;
+      if(catalogRole.fixed){src={hex:catalogRole.fixed};shades=makeShades(src.hex,r.cf,r.lock,S,Lshift,C,T,null,0);}
+      else if(catalogRole.fixedHue!==undefined){src=srcForRole(r);shades=makeSemanticShades(catalogRole.fixedHue,src.hex,S,Lshift,C);}
+      else{src=srcForRole(r);shades=makeShades(src.hex,r.cf,r.lock,S,Lshift,C,T,catalogRole.fixedL??null,catalogRole.hueShift??0);}
+      return{...r,src,shades};
+    });
+  }
+  const key=n=>n.toLowerCase().replace(/\s+/g,'-');
+  
+  if (exportFmt === 'css') {
+    const lines = [':root {'];
+    palData.forEach(p => {
+      const cfg = exportSteps[p.id] || { light: 'none', dark: 'none' };
+      const lShade = p.shades.find(s => s.step == cfg.light);
+      const dShade = p.shades.find(s => s.step == cfg.dark);
+      if (lShade) lines.push(`  --color-${key(p.name)}-light: ${lShade.hex};`);
+      if (dShade) lines.push(`  --color-${key(p.name)}-dark: ${dShade.hex};`);
+    });
+    lines.push('}');
+    return lines.join('\n');
+  }
+  
+  if (exportFmt === 'tailwind') {
+    const lines = ['colors: {'];
+    palData.forEach(p => {
+      const cfg = exportSteps[p.id] || { light: 'none', dark: 'none' };
+      const lShade = p.shades.find(s => s.step == cfg.light);
+      const dShade = p.shades.find(s => s.step == cfg.dark);
+      if (lShade || dShade) {
+        lines.push(`  '${key(p.name)}': {`);
+        if (lShade) lines.push(`    light: '${lShade.hex}',`);
+        if (dShade) lines.push(`    dark: '${dShade.hex}',`);
+        lines.push(`  },`);
+      }
+    });
+    lines.push('}');
+    return lines.join('\n');
+  }
+  
+  // JSON
+  const obj = {};
+  palData.forEach(p => {
+    const cfg = exportSteps[p.id] || { light: 'none', dark: 'none' };
+    const lShade = p.shades.find(s => s.step == cfg.light);
+    const dShade = p.shades.find(s => s.step == cfg.dark);
+    if (lShade || dShade) {
+      obj[key(p.name)] = {};
+      if (lShade) obj[key(p.name)].light = lShade.hex;
+      if (dShade) obj[key(p.name)].dark = dShade.hex;
+    }
+  });
+  return JSON.stringify(obj, null, 2);
+}
+
+// ══════════════════════════════════════════ EXPORT TO PENPOT
+function exportToPenpot() {
+  const { Lshift, C, T, S } = getSliders();
+  const active = activeRoles();
+  if(!active.length) return toast('No active roles to export');
+
+  const palData = active.map(r => {
+    const catalogRole = ROLE_CATALOG.find(x => x.id === r.id) || r;
+    let src, shades;
+    if(catalogRole.fixed){ src = {hex:catalogRole.fixed}; shades = makeShades(src.hex, r.cf, r.lock, S, Lshift, C, T, catalogRole.fixedL??null, catalogRole.hueShift??0); }
+    else if(catalogRole.fixedHue!==undefined){ src = srcForRole(r); shades = makeSemanticShades(catalogRole.fixedHue, src.hex, S, Lshift, C); }
+    else { src = srcForRole(r); shades = makeShades(src.hex, r.cf, r.lock, S, Lshift, C, T, catalogRole.fixedL??null, catalogRole.hueShift??0); }
+    return { ...r, src, shades, group: catalogRole.group };
+  });
+
+  const colorsToExport =[];
+  const key = n => n.toLowerCase().replace(/\s+/g, '-');
+
+  palData.forEach(p => {
+    // Get selected shades for themes (default 'none')
+    const cfg = exportSteps[p.id] || { light: 'none', dark: 'none' };
+    const groupKey = key(p.group || 'color');
+    const nameKey = key(p.name);
+
+    // Export Light version if selected
+    if (cfg.light !== 'none') {
+      const lShade = p.shades.find(s => s.step == cfg.light);
+      if (lShade) {
+        colorsToExport.push({ name: `${groupKey}.${nameKey}.light`, hex: lShade.hex });
+      }
+    }
+
+    // Export Dark version if selected
+    if (cfg.dark !== 'none') {
+      const dShade = p.shades.find(s => s.step == cfg.dark);
+      if (dShade) {
+        colorsToExport.push({ name: `${groupKey}.${nameKey}.dark`, hex: dShade.hex });
+      }
+    }
+  });
+
+  // Send tokenized colors to Penpot main thread
+  parent.postMessage({
+    type: 'ADD_COLORS',
+    colors: colorsToExport
+  }, '*');
+}
+
+// Listen for messages from Penpot logic
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'COLORS_ADDED') {
+    toast(`Added ${event.data.count} colors to Penpot library!`);
+  }
+});
+
+function setFmt(f){exportFmt=f;const el=document.getElementById('exportCode');if(el)el.textContent=genExport();document.querySelectorAll('.etab').forEach(t=>t.classList.toggle('on',t.textContent.toLowerCase()===f))}
+function copyAllCSS(){exportFmt='css';navigator.clipboard.writeText(genExport()).then(()=>toast('CSS copied!'))}
+
+// ══════════════════════════════════════════ COLOR PICKER
+function openPicker(id,btnEl,event){
+  event.stopPropagation();activeCPId=id;
+  let hex='#3b5bdb';
+  if(id==='bg1')hex=ctBg1;
+  else if(id==='bg2')hex=ctBg2;
+  else{const s=sources.find(x=>x.id===id);if(s)hex=s.hex}
+  const[h,s,v]=hexToHsv(hex);['h','s','v'].forEach((k,i)=>document.getElementById('cp-'+k).value=[h,s,v][i]);
+  document.getElementById('cp-hex').value=hex;
+  document.getElementById('cp-preview').style.background=hex;
+  updateCPGrad(h,s,v);
+  const pop=document.getElementById('cp-popover');
+  pop.style.display='flex';
+  const r=btnEl.getBoundingClientRect();
+  const pw=240, ph=220;
+  let left=r.left;
+  let top=r.bottom+6;
+  if(left+pw>window.innerWidth-8) left=window.innerWidth-pw-8;
+  if(left<8) left=8;
+  if(top+ph>window.innerHeight-8) top=r.top-ph-6;
+  if(top<8) top=8;
+  pop.style.left=left+'px';
+  pop.style.top=top+'px';
+}
+function closePicker(){document.getElementById('cp-popover').style.display='none';activeCPId=null}
+function closePickerOnOutside(e){if(activeCPId&&!document.getElementById('cp-popover').contains(e.target))closePicker()}
+function updateCPGrad(h,s,v){
+  document.getElementById('cp-s').style.background=`linear-gradient(to right,${hsvToHex(h,0,v)},${hsvToHex(h,100,v)})`;
+  document.getElementById('cp-v').style.background=`linear-gradient(to right,#000,${hsvToHex(h,s,100)})`;
+}
+function updateCP(){
+  const h=+document.getElementById('cp-h').value,s=+document.getElementById('cp-s').value,v=+document.getElementById('cp-v').value;
+  const hex=hsvToHex(h,s,v);
+  document.getElementById('cp-hex').value=hex;
+  document.getElementById('cp-preview').style.background=hex;
+  updateCPGrad(h,s,v);applyCPColor(hex);
+}
+function updateCPFromHex(){
+  let hex=document.getElementById('cp-hex').value.trim();
+  if(!/^#[0-9a-fA-F]{6}$/i.test(hex)){if(/^[0-9a-fA-F]{6}$/i.test(hex))hex='#'+hex;else return}
+  const[h,s,v]=hexToHsv(hex);['h','s','v'].forEach((k,i)=>document.getElementById('cp-'+k).value=[h,s,v][i]);
+  document.getElementById('cp-preview').style.background=hex;
+  updateCPGrad(h,s,v);applyCPColor(hex);
+}
+function applyCPColor(hex){
+  if(!activeCPId)return;
+  if(activeCPId==='bg1'){ctBg1=hex;document.getElementById('btn-bg1').style.background=hex;rebuild();persistState();}
+  else if(activeCPId==='bg2'){ctBg2=hex;document.getElementById('btn-bg2').style.background=hex;rebuild();persistState();}
+  else{
+    const s=sources.find(x=>x.id===activeCPId);
+    if(s){s.hex=hex;document.querySelector(`.source-item[data-id="${activeCPId}"] .swatch-btn`).style.background=hex;renderRoleGroups();rebuild();persistState();}
+  }
+}
+
+// ══════════════════════════════════════════ AI
+async function checkConn(){
+  const port=document.getElementById('port').value||'1234';
+  const dot=document.getElementById('aiDot'),txt=document.getElementById('aiStatusTxt'),sel=document.getElementById('modelSel');
+  try{
+    const r=await fetch(`http://localhost:${port}/api/v1/models`,{signal:AbortSignal.timeout(3000)});
+    if(!r.ok)throw 0;
+    const data=await r.json();
+    const models=(data.models??data.data??[]).filter(m=>m.type==='llm'||!m.type);
+    const loaded=models.filter(m=>m.loaded_instances?.length>0);
+    const list=loaded.length?loaded:models;
+    sel.innerHTML='<option value="">— select model —</option>';
+    list.forEach(m=>{const key=m.key??m.id??'';const opt=document.createElement('option');opt.value=key;opt.textContent=((m.display_name??key)+(m.loaded_instances?.length?' ●':'')).slice(0,38);if(m.loaded_instances?.length)opt.selected=true;sel.appendChild(opt)});
+    dot.className='status-dot ok';txt.textContent=list.length+' model'+(list.length!==1?'s':'');
+  }catch{dot.className='status-dot';txt.textContent='Not connected';sel.innerHTML='<option value="">— select model —</option>'}
+}
+
+async function runAI(){
+  const text=document.getElementById('aiText').value.trim();if(!text)return;
+  const port=document.getElementById('port').value||'1234';
+  const model=document.getElementById('modelSel').value;if(!model)return toast('Select a model first');
+  const btn=document.getElementById('aiBtn'),lbl=document.getElementById('aiLabel');
+  btn.disabled=true;lbl.innerHTML='<span class="spin"></span>';
+  const srcLines=sources.map(s=>`- "${s.id}": ${s.name}`).join('\n');
+  const system=`You are an expert UI colour designer and colour psychologist.
+The user describes a project mood or theme. You must:
+1. Choose mood values between -1 and 1:
+   - valence: palette lightness (-1=dark, 0=neutral, +1=light)
+   - arousal: saturation (-1=muted, 0=neutral, +1=vivid)
+   - temperature: hue shift (-1=cool/blue, 0=neutral, +1=warm/orange)
+2. Choose a hue angle (0-359°) for each source. Make them visually distinct (60°+ apart).
+   OKLCH hue ref: 0=red 30=orange 60=yellow 90=lime 150=green 180=cyan 220=sky 250=blue 280=violet 300=magenta 330=pink
+
+Sources to assign hues to:
+${srcLines}
+
+Return ONLY valid JSON:
+{"valence":0.0,"arousal":0.0,"temperature":0.0,"sources":{${sources.map((s,i)=>`"${s.id}":${[250,350,120][i]??40}`).join(',')}},"reasoning":"one sentence"}`;
+  try{
+    const r=await fetch(`http://localhost:${port}/api/v1/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,system_prompt:system,input:text,temperature:0.65,max_output_tokens:300,store:false})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const msg=(data.output??[]).find(o=>o.type==='message');if(!msg)throw new Error('No message');
+    const raw=msg.content.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/```json|```/g,'').trim();
+    const m=raw.match(/\{[\s\S]*\}/);if(!m)throw new Error('No JSON');
+    const p=JSON.parse(m[0]);
+    if(!p.sources)throw new Error('No sources');
+    let applied=0;
+    sources.forEach((s,i)=>{
+      const h=p.sources[s.id]??Object.values(p.sources)[i];
+      if(typeof h==='number'){s.hex=oklchToHex(0.52,Math.min(0.18,maxC(0.52,((h%360)+360)%360)),((h%360)+360)%360);applied++}
+    });
+    if(!applied)throw new Error('No hues applied');
+    ['val','aro','tmp'].forEach((k,i)=>{
+      const v=[p.valence,p.arousal,p.temperature][i];
+      if(typeof v==='number'){const el=document.getElementById('s-'+k);el.value=Math.round(Math.max(-50,Math.min(50,v*50)));document.getElementById('v-'+k).textContent=el.value}
+    });
+    renderSources();renderRoleGroups();rebuild();persistState();
+    if(p.reasoning){
+      const box=document.getElementById('aiResp');
+      document.getElementById('aiRespText').textContent=p.reasoning;
+      box.style.display='block';
+    }
+  }catch(e){
+    toast('AI: '+e.message.slice(0,60));
+    const box=document.getElementById('aiResp');
+    document.getElementById('aiRespText').textContent='Error: '+e.message;
+    box.style.display='block';
+  }
+  btn.disabled=false;lbl.textContent='Generate';
+}
+
+function setTheme(t,btn){document.body.setAttribute('data-theme',t);document.querySelectorAll('.theme-btn').forEach(b=>b.classList.toggle('on',b===btn))}
+
+function copyT(text) {
+  // 1. Create a temporary invisible input
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  // Make it invisible but keep it in DOM
+  textArea.style.position = "fixed";
+  textArea.style.left = "-9999px";
+  document.body.appendChild(textArea);
+
+  // 2. Select and copy
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      toast('Copied ' + text);
+    }
+  } catch (err) {
+    console.error('Oops, unable to copy', err);
+  }
+  
+  // 3. Remove
+  document.body.removeChild(textArea);
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+
+// ══════════════════════════════════════════ HARMONY PRESETS
+const HARMONIES =[
+  {id:'comp',    label:'Complementary',       offsets:[180]},
+  {id:'split',   label:'Split-comp',          offsets:[150, 210]},
+  {id:'triadic', label:'Triadic',             offsets:[120, 240]},
+  {id:'tetra',   label:'Tetradic',            offsets:[90, 180, 270]},
+  {id:'analog2', label:'Analogous ×2',        offsets:[30, 60]},
+  {id:'analog3', label:'Analogous ×3',        offsets:[30, 60, 90]},
+  {id:'square',  label:'Square',              offsets:[90, 180, 270]},
+];
+let activeHarmony = null;
+let savedSources = null; // snapshot before harmony applied
+
+function toggleHarmony(){
+  const panel = document.getElementById('harmonyPanel');
+  const btn = document.querySelector('[onclick="toggleHarmony()"]');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  if(btn) btn.classList.toggle('active', !isOpen);
+  if(!isOpen) renderHarmonyGrid();
+}
+
+function renderHarmonyGrid(){
+  document.getElementById('harmonyGrid').innerHTML = HARMONIES.map(h =>
+    `<button class="h-preset${activeHarmony===h.id?' on':''}" onclick="applyHarmony('${h.id}')">${h.label}</button>`
+  ).join('');
+}
+
+function applyHarmony(id){
+  // If same preset clicked again — restore saved state
+  if(activeHarmony === id && savedSources){
+    sources = savedSources.map(s=>({...s}));
+    activeHarmony = null;
+    savedSources = null;
+    renderHarmonyGrid();
+    renderSources();
+    renderRoleGroups();
+    rebuild();
+    persistState();
+    toast('Harmony removed');
+    return;
+  }
+  // Save current sources before applying
+  savedSources = sources.map(s=>({...s}));
+  activeHarmony = id;
+  const harmony = HARMONIES.find(h=>h.id===id);
+  if(!harmony) return;
+  // Get primary source hue
+  const primary = sources[0];
+  const [,bC,bH] = hexToOklch(primary.hex);
+  const baseHue = bH;
+  const baseChroma = Math.max(bC, 0.16);
+  // Ensure we have enough sources for this harmony
+  const needed = harmony.offsets.length + 1;
+  while(sources.length < needed){
+    const sid='s'+(uid++);
+    sources.push({id:sid, name:'Color '+(uid-1), hex:oklchToHex(0.52,0.16,0)});
+  }
+  // Apply hues
+  harmony.offsets.forEach((offset, i) => {
+    const src = sources[i+1];
+    if(!src) return;
+    const newH = (baseHue + offset + 360) % 360;
+    const safeC = Math.min(baseChroma, maxC(0.52, newH));
+    src.hex = oklchToHex(0.52, safeC, newH);
+  });
+  renderHarmonyGrid();
+  renderSources();
+  renderRoleGroups();
+  rebuild();
+  persistState();
+  toast(harmony.label + ' applied · click again to undo');
+}
+
+// ══════════════════════════════════════════ FROM IMAGE
+function extractFromImage(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // Show thumbnail preview — clickable to open modal
+      const preview = document.getElementById('imgPreview');
+      const wrap = document.getElementById('imgPreviewWrap');
+      preview.src = e.target.result;
+      wrap.style.display = 'block';
+      preview.title = 'Click to enlarge';
+      preview.onclick = () => {
+        document.getElementById('imgModalImg').src = e.target.result;
+        document.getElementById('imgModal').style.display = 'flex';
+      };
+      // Sample pixels at moderate resolution
+      const canvas = document.createElement('canvas');
+      const MAX = 200;
+      const scale = Math.min(1, MAX/Math.max(img.width,img.height));
+      canvas.width = Math.round(img.width*scale);
+      canvas.height = Math.round(img.height*scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      // Collect OKLCH samples — two passes:
+      // 1st pass: chromatic pixels (C>0.04), 2nd pass: any non-white/black if 1st too few
+      const samples =[];
+      const fallbackSamples =[];
+      for(let i=0;i<data.length;i+=4){
+        const[L,C,H]=hexToOklch(r2h(data[i],data[i+1],data[i+2]));
+        if(L>0.10 && L<0.95){
+          if(C>0.04) samples.push([L,C,H]);
+          else if(C>0.005) fallbackSamples.push([L,C,H]);
+        }
+      }
+      // Use chromatic samples if enough, otherwise fall back to any non-neutral pixels
+      const useSamples = samples.length >= 10 ? samples : [...samples, ...fallbackSamples];
+      if(useSamples.length < 5){ toast('Image has no usable colors'); return; }
+      // K-means in OKLCH
+      const k = sources.length;
+      const centers = kMeans(useSamples, k);
+      centers.sort((a,b)=>b[1]-a[1]); 
+      // Apply — clamp L and C to valid range
+      let applied = 0;
+      centers.forEach((center, i) => {
+        if(i >= sources.length) return;
+        const L = Math.max(0.25, Math.min(0.75, center[0]));
+        const H = center[2];
+        const C = Math.min(Math.max(center[1], 0.01), maxC(L, H));
+        sources[i].hex = oklchToHex(L, C, H);
+        applied++;
+      });
+      renderSources();
+      renderRoleGroups();
+      rebuild();
+      persistState();
+      toast(applied + ' color' + (applied!==1?'s':'') + ' extracted');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+
+function clearImgPreview(){
+  const wrap = document.getElementById('imgPreviewWrap');
+  const preview = document.getElementById('imgPreview');
+  wrap.style.display = 'none';
+  preview.src = '';
+  preview.onclick = null;
+}
+
+function kMeans(points, k, iterations=20){
+  const centers = [points[Math.floor(Math.random()*points.length)]];
+  while(centers.length < k){
+    let best=null, bestDist=0;
+    const sample = points.filter((_,i)=>i%8===0); 
+    sample.forEach(p=>{
+      const d = Math.min(...centers.map(c=>oklchDist(p,c)));
+      if(d>bestDist){bestDist=d;best=p}
+    });
+    centers.push(best||points[Math.floor(Math.random()*points.length)]);
+  }
+  for(let iter=0;iter<iterations;iter++){
+    const clusters = Array.from({length:k},()=>[]);
+    points.forEach(p=>{
+      let best=0, bestD=Infinity;
+      centers.forEach((c,i)=>{const d=oklchDist(p,c);if(d<bestD){bestD=d;best=i}});
+      clusters[best].push(p);
+    });
+    centers.forEach((c,i)=>{
+      if(!clusters[i].length) return;
+      c[0]=clusters[i].reduce((s,p)=>s+p[0],0)/clusters[i].length;
+      c[1]=clusters[i].reduce((s,p)=>s+p[1],0)/clusters[i].length;
+      const sinSum=clusters[i].reduce((s,p)=>s+Math.sin(p[2]*Math.PI/180),0);
+      const cosSum=clusters[i].reduce((s,p)=>s+Math.cos(p[2]*Math.PI/180),0);
+      c[2]=(Math.atan2(sinSum,cosSum)*180/Math.PI+360)%360;
+    });
+  }
+  return centers;
+}
+
+function oklchDist(a,b){
+  const dL=a[0]-b[0], dC=a[1]-b[1];
+  const dH=((a[2]-b[2]+540)%360)-180;
+  return Math.sqrt(dL*dL+dC*dC+(dH/180)*(dH/180)*0.5);
+}
+
+// ══════════════════════════════════════════ INITIALIZATION
+// Load state from browser memory first, then render UI and check AI connection
+loadState();
+checkConn();
+</script>
+
+<!-- Help modal -->
+<div id="helpModal" class="help-modal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="help-box">
+    <button class="help-close" onclick="document.getElementById('helpModal').style.display='none'">✕</button>
+    <div class="help-h1">Palette Studio — как все работает</div>
+
+    <div class="help-section">
+      <h3>Color Sources</h3>
+      <p>Независимые брендовые цвета. Все роли берут hue из Sources. Можно добавить несколько и назначить каждой роли свой источник через выпадающее меню рядом с ролью.</p>
+    </div>
+
+    <div class="help-section">
+      <h3>Semantic Roles (группы)</h3>
+      <ul>
+        <li><b>Core</b> — Primary и Secondary. Основные цвета бренда.</li>
+        <li><b>Neutral</b> — Background, Surface, Border, Text. Генерируются через HCT с брендовым hue.</li>
+        <li><b>Accent</b> — дополнительные акцентные цвета из других Sources.</li>
+        <li><b>Semantic</b> — Error, Warning, Success, Info. Фиксированные hue (красный/жёлтый/зелёный/синий), насыщенность зависит от бренда и Arousal.</li>
+        <li><b>Extended</b> — Highlight, On Primary и другие вспомогательные роли.</li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h3>Mood Sliders</h3>
+      <ul>
+        <li><b>Valence</b> — светлота палитры. Минус = тёмная тема, плюс = светлая.</li>
+        <li><b>Arousal</b> — насыщенность. Минус = приглушённые мутные тона, плюс = яркие насыщенные.</li>
+        <li><b>Temperature</b> — тепло/холод. Минус = холодный синеватый оттенок, плюс = тёплый оранжевый.</li>
+        <li><b>Shades</b> — количество ступеней в шкале (5–12).</li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h3>Контрастность (APCA)</h3>
+      <p>Используется APCA — алгоритм WCAG 3.0, точнее чем старый WCAG 2.1. Показывается для двух фоновых цветов которые можно задать в разделе Contrast Check.</p>
+      <ul>
+        <li><span class="help-badge green">Lc 75+</span> нормальный текст любого размера</li>
+        <li><span class="help-badge orange">Lc 60+</span> крупный текст (18px+) или жирный</li>
+        <li><span class="help-badge grey">Lc &lt;60</span> только декоративные элементы</li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h3>Harmony</h3>
+      <p>Автоматически расставляет Sources по цветовому кругу. Complementary — противоположный цвет, Triadic — три цвета через 120°, и т.д. Повторный клик на активный пресет — отмена.</p>
+    </div>
+
+    <div class="help-section">
+      <h3>From Image</h3>
+      <p>Извлекает доминантные цвета из картинки через K-means кластеризацию в OKLCH. Применяет к Sources. Работает даже для ч/б изображений.</p>
+    </div>
+
+    <div class="help-section">
+      <h3>AI Generation</h3>
+      <p>Подключается к локальной модели через LM Studio (порт 1234). Описываешь настроение — модель выбирает hue для каждого Source и настраивает ползунки. Ответ модели отображается под кнопкой Generate.</p>
+    </div>
+
+    <div class="help-section">
+      <h3>Export</h3>
+      <p>CSS Variables, Tailwind config или JSON. Кнопка ↓ CSS в шапке копирует CSS в буфер сразу.</p>
+    </div>
+  </div>
+</div>
+<!-- Image modal -->
+<div id="imgModal" class="img-modal" onclick="this.style.display='none'">
+  <img id="imgModalImg" src="">
+</div>
+</body>
+</html>
