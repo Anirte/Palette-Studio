@@ -8,7 +8,7 @@ penpot.ui.onMessage((message) => {
 
     if (message.mode === 'tokens') {
       const catalog = penpot.library.local.tokens;
-
+      console.log('Colors received:', JSON.stringify(message.colors));
       const lightColors = message.colors.filter(c => c.variant === 'light');
       const darkColors = message.colors.filter(c => c.variant === 'dark');
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
