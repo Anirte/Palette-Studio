@@ -3,31 +3,23 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v5.1 ===');
+console.log('=== PLUGIN LOADED v6 ===');
+
+// Store catalog reference at load time
+const catalog = penpot.library.local.tokens;
 
 penpot.ui.onMessage((message) => {
   if (message.type === 'ADD_COLORS') {
     if (message.mode === 'tokens') {
-      console.log('=== EXPORT TOKENS START v5 ===');
-      const catalog = penpot.library.local.tokens;
+      console.log('=== EXPORT TOKENS v6 ===');
 
       const lightColors = message.colors.filter(c => c.variant === 'light');
       const darkColors = message.colors.filter(c => c.variant === 'dark');
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
-      console.log('needsThemes:', needsThemes);
 
       catalog.addSet({ name: 'Palette Studio' });
-
-      if (needsThemes) {
-        catalog.addTheme({ group: '', name: 'Light' });
-        catalog.addTheme({ group: '', name: 'Dark' });
-      }
-
-      console.log('sets count:', catalog.sets.length);
-      console.log('themes count:', catalog.themes.length);
-
       const tokenSet = catalog.sets[catalog.sets.length - 1];
-      console.log('tokenSet by index:', tokenSet?.name);
+      console.log('tokenSet:', tokenSet?.name, tokenSet?.[Symbol.toStringTag]);
 
       lightColors.forEach((c) => {
         tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
@@ -37,16 +29,19 @@ penpot.ui.onMessage((message) => {
       });
 
       if (needsThemes) {
+        catalog.addTheme({ group: '', name: 'Light' });
+        catalog.addTheme({ group: '', name: 'Dark' });
+
         const lightTheme = catalog.themes[catalog.themes.length - 2];
         const darkTheme = catalog.themes[catalog.themes.length - 1];
         const freshSet = catalog.sets[catalog.sets.length - 1];
-        console.log('lightTheme:', lightTheme?.name);
-        console.log('darkTheme:', darkTheme?.name);
-        console.log('freshSet:', freshSet?.name);
 
-        lightTheme.addSet(freshSet.id);
-        darkTheme.addSet(freshSet.id);
-        console.log('=== THEMES LINKED ===');
+        console.log('freshSet tag:', freshSet?.[Symbol.toStringTag]);
+        console.log('token-set-proxy? check:', freshSet?.[Symbol.toStringTag] === 'TokenSetProxy');
+
+        lightTheme.addSet(freshSet);
+        darkTheme.addSet(freshSet);
+        console.log('=== DONE ===');
       }
 
     } else {
