@@ -2,21 +2,21 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   width: 900,
   height: 640
 });
-console.log('=== PLUGIN LOADED v9.1 ===');
+console.log('=== PLUGIN LOADED v9.2 ===');
 
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
-    console.log('=== EXPORT TOKENS v9.1 STARTED ===');
+    console.log('=== EXPORT TOKENS v9.2 STARTED ===');
 
     if (message.mode === 'tokens') {
       const catalog = penpot.library.local.tokens;
 
       // 1. РАЗДЕЛЯЕМ ЦВЕТА
-      const lightColors =[];
+      const lightColors = [];
       const darkColors =[];
 
       message.colors.forEach(c => {
-        // Имя токена тоже НЕ ДОЛЖНО содержать пробелов!
+        // Имя токена тоже НЕ ДОЛЖНО содержать пробелов (по правилам Penpot)!
         // Заменяем пробелы на дефисы, убираем .light/.dark
         let cleanName = c.name.replace('.light', '').replace('.dark', '').replace(/\s+/g, '-');
 
@@ -36,7 +36,8 @@ penpot.ui.onMessage(async (message) => {
       let darkSet = catalog.sets.find(s => s.name === darkSetName);
       if (!darkSet) darkSet = catalog.addSet({ name: darkSetName });
 
-      // Очистка старых токенов[lightSet, darkSet].forEach(set => {
+      // Очистка старых токенов (ИСправлена синтаксическая ошибка здесь)
+      [lightSet, darkSet].forEach(set => {
         if (set && set.tokens) set.tokens.forEach(t => t.remove());
       });
 
@@ -58,7 +59,7 @@ penpot.ui.onMessage(async (message) => {
       }
 
     } else {
-      // Обычный экспорт
+      // Обычный экспорт (не токены)
       message.colors.forEach((c) => {
         let cleanName = c.name.replace(/\s+/g, '-');
         penpot.library.createColor({ name: cleanName, color: c.hex });
@@ -66,6 +67,6 @@ penpot.ui.onMessage(async (message) => {
     }
 
     penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
-    console.log('=== EXPORT FINISHED v9.1 ===');
+    console.log('=== EXPORT FINISHED v9.2 ===');
   }
 });
