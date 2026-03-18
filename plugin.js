@@ -3,7 +3,7 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v5 ===');
+console.log('=== PLUGIN LOADED v5.1 ===');
 
 penpot.ui.onMessage((message) => {
   if (message.type === 'ADD_COLORS') {
