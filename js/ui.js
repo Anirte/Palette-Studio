@@ -52,14 +52,10 @@ let isMinimized = false;
 function toggleMinimize() {
   isMinimized = !isMinimized;
   if (isMinimized) {
-    document.querySelector('nav').style.borderBottom = 'none';
     document.getElementById('minimizeBtn').textContent = '□';
-    document.querySelectorAll('body > *:not(nav)').forEach(el => el.style.display = 'none');
     penpot.ui.resize(900, 50);
   } else {
     document.getElementById('minimizeBtn').textContent = '─';
-    document.querySelector('nav').style.borderBottom = '';
-    document.querySelectorAll('body > *:not(nav)').forEach(el => el.style.display = '');
     penpot.ui.resize(900, 640);
   }
 }
