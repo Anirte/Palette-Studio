@@ -20,7 +20,9 @@ penpot.ui.onMessage(async (message) => {
         await new Promise(r => setTimeout(r, 200));
         const tokenSet = catalog.sets.find(s => s.name === 'Palette Studio');
 
-        tokenSet.tokens.forEach(t => t.remove());
+        const newNames = message.colors.map(c => c.name);
+        tokenSet.tokens.filter(t => newNames.includes(t.name)).forEach(t => t.remove());
+
         message.colors.forEach((c) => {
           tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
         });
@@ -35,7 +37,8 @@ penpot.ui.onMessage(async (message) => {
           catalog.addSet({ name: 'Palette Studio/Dark' });
         }
 
-        const themesExist = catalog.themes.find(t => t.name === 'Light' && t.group === 'mode');
+        const themesExist = !!catalog.themes.find(t => t.name === 'Light' && t.group === 'mode');
+
         if (!catalog.themes.find(t => t.name === 'Light')) {
           catalog.addTheme({ group: 'mode', name: 'Light' });
         }
@@ -50,8 +53,12 @@ penpot.ui.onMessage(async (message) => {
         const lightTheme = catalog.themes.find(t => t.name === 'Light');
         const darkTheme = catalog.themes.find(t => t.name === 'Dark');
 
-        lightSet.tokens.forEach(t => t.remove());
-        darkSet.tokens.forEach(t => t.remove());
+        const lightNames = lightColors.map(c => c.name);
+        const darkNames = darkColors.map(c => c.name);
+        const allNames = [...new Set([...lightNames, ...darkNames])];
+
+        lightSet.tokens.filter(t => allNames.includes(t.name)).forEach(t => t.remove());
+        darkSet.tokens.filter(t => allNames.includes(t.name)).forEach(t => t.remove());
 
         lightColors.forEach((c) => {
           lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
@@ -74,7 +81,7 @@ penpot.ui.onMessage(async (message) => {
           type: 'COLORS_ADDED',
           count: lightColors.length + darkColors.length,
           needsThemes: true,
-          themesExist: !!themesExist
+          themesExist
         });
       }
 
