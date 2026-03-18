@@ -2,52 +2,47 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   width: 900,
   height: 640
 });
-console.log('=== PLUGIN LOADED v10.0 ===');
 
-penpot.ui.onMessage(async (message) => {
-  if (message.type === 'ADD_COLORS' && message.mode === 'tokens') {
-    const catalog = penpot.library.local.tokens;
-    const setName = 'PaletteStudio';
+console.log('=== PLUGIN LOADED v11 ===');
 
-    // 1. Создаем один общий Сет
-    let tokenSet = catalog.sets.find(s => s.name === setName) || catalog.addSet({ name: setName });
+// Pre-create sets and themes at load time
+const catalog = penpot.library.local.tokens;
+catalog.addSet({ name: 'Palette Studio/Light' });
+catalog.addSet({ name: 'Palette Studio/Dark' });
+catalog.addTheme({ group: '', name: 'Light' });
+catalog.addTheme({ group: '', name: 'Dark' });
 
-    // 2. Получаем или создаем темы
-    let lightT = catalog.themes.find(t => t.name === 'Light') || catalog.addTheme({ name: 'Light', group: '' });
-    let darkT = catalog.themes.find(t => t.name === 'Dark') || catalog.addTheme({ name: 'Dark', group: '' });
+const lightSet = catalog.sets[catalog.sets.length - 2];
+const darkSet = catalog.sets[catalog.sets.length - 1];
+const lightTheme = catalog.themes[catalog.themes.length - 2];
+const darkTheme = catalog.themes[catalog.themes.length - 1];
 
-    // 3. Группируем цвета по имени (например: "primary")
-    const grouped = {};
-    message.colors.forEach(c => {
-      let name = c.name.replace('.light', '').replace('.dark', '').replace(/\s+/g, '-');
-      if (!grouped[name]) grouped[name] = { light: null, dark: null };
-      if (c.variant === 'dark' || c.name.endsWith('.dark')) grouped[name].dark = c.hex;
-      else grouped[name].light = c.hex;
-    });
+console.log('lightSet:', lightSet?.name);
+console.log('darkSet:', darkSet?.name);
 
-    // 4. Заполняем сет умными токенами
-    Object.keys(grouped).forEach(name => {
-      const data = grouped[name];
+lightTheme.addSet(lightSet);
+darkTheme.addSet(darkSet);
+console.log('=== THEMES LINKED AT LOAD TIME ===');
 
-      // Создаем токен со светлым значением по умолчанию
-      const token = tokenSet.addToken({
-        type: 'color',
-        name: name,
-        value: data.light || data.dark
+penpot.ui.onMessage((message) => {
+  if (message.type === 'ADD_COLORS') {
+    if (message.mode === 'tokens') {
+      const lightColors = message.colors.filter(c => c.variant === 'light');
+      const darkColors = message.colors.filter(c => c.variant === 'dark');
+
+      lightColors.forEach((c) => {
+        lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
       });
-
-      // ПРИВЯЗКА К ТЕМАМ (через setThemeValue)
-      // В твоем файле tokens.cljs видно, что Penpot ожидает именно такую логику:
-      if (token && data.dark) {
-         // Привязываем темный цвет к ID темной темы
-         token.setThemeValue(darkT.id, data.dark);
-      }
-      if (token && data.light) {
-         // Привязываем светлый цвет к ID светлой темы
-         token.setThemeValue(lightT.id, data.light);
-      }
-    });
-
-    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: Object.keys(grouped).length });
+      darkColors.forEach((c) => {
+        darkSet.addToken({ type: 'color', name: c.name, value: c.hex });
+      });
+    } else {
+      message.colors.forEach((c) => {
+        const newColor = penpot.library.local.createColor();
+        newColor.name = c.name;
+        newColor.color = c.hex;
+      });
+    }
+    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
   }
 });
