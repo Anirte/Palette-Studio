@@ -39,8 +39,15 @@ penpot.ui.onMessage((message) => {
         console.log('freshSet tag:', freshSet?.[Symbol.toStringTag]);
         console.log('token-set-proxy? check:', freshSet?.[Symbol.toStringTag] === 'TokenSetProxy');
 
-        lightTheme.addSet(freshSet);
-        darkTheme.addSet(freshSet);
+        // Create a fake proxy-like object with the correct Symbol.toStringTag
+        const fakeProxy = Object.defineProperty(
+          { id: freshSet.id, name: freshSet.name },
+          Symbol.toStringTag,
+          { value: 'TokenSetProxy' }
+        );
+
+        lightTheme.addSet(fakeProxy);
+        darkTheme.addSet(fakeProxy);
         console.log('=== DONE ===');
       }
 
