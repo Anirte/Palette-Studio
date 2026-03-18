@@ -8,57 +8,79 @@ console.log('=== PLUGIN LOADED v6 ===');
 // Store catalog reference at load time
 const catalog = penpot.library.local.tokens;
 
+// Listen for messages from the UI (index.html)
 penpot.ui.onMessage((message) => {
   if (message.type === 'ADD_COLORS') {
+
+    // MODE 1: Export as Design Tokens
     if (message.mode === 'tokens') {
-      console.log('=== EXPORT TOKENS v6 ===');
+      console.log('=== EXPORT TOKENS STARTED ===');
 
       const lightColors = message.colors.filter(c => c.variant === 'light');
       const darkColors = message.colors.filter(c => c.variant === 'dark');
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
 
-      catalog.addSet({ name: 'Palette Studio' });
-      const tokenSet = catalog.sets[catalog.sets.length - 1];
-      console.log('tokenSet:', tokenSet?.name, tokenSet?.[Symbol.toStringTag]);
+      // 1. Create a new Token Set
+      const setName = 'Palette Studio';
+      penpot.library.local.tokens.addSet({ name: setName });
 
-      lightColors.forEach((c) => {
-        tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
-      });
-      darkColors.forEach((c) => {
-        tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
-      });
+      // Find the set we just created in the list
+      const tokenSet = penpot.library.local.tokens.sets.find(s => s.name === setName);
 
-      if (needsThemes) {
-        catalog.addTheme({ group: '', name: 'Light' });
-        catalog.addTheme({ group: '', name: 'Dark' });
-
-        const lightTheme = catalog.themes[catalog.themes.length - 2];
-        const darkTheme = catalog.themes[catalog.themes.length - 1];
-        const freshSet = catalog.sets[catalog.sets.length - 1];
-
-        console.log('freshSet tag:', freshSet?.[Symbol.toStringTag]);
-        console.log('token-set-proxy? check:', freshSet?.[Symbol.toStringTag] === 'TokenSetProxy');
-
-        // Create a fake proxy-like object with the correct Symbol.toStringTag
-        const fakeProxy = Object.defineProperty(
-          { id: freshSet.id, name: freshSet.name },
-          Symbol.toStringTag,
-          { value: 'TokenSetProxy' }
-        );
-
-        lightTheme.addSet(fakeProxy);
-        darkTheme.addSet(fakeProxy);
-        console.log('=== DONE ===');
+      if (!tokenSet) {
+        console.error("Could not find the created TokenSet");
+        return;
       }
 
+      // 2. Add color tokens to this set
+      message.colors.forEach((c) => {
+        tokenSet.addToken({
+          type: 'color',
+          name: c.name,
+          value: c.hex
+        });
+      });
+
+      // 3. Create Themes and link the Set if we have both variants
+      if (needsThemes) {
+        // Add themes to the library
+        penpot.library.local.tokens.addTheme({ group: '', name: 'Light' });
+        penpot.library.local.tokens.addTheme({ group: '', name: 'Dark' });
+
+        // Find themes by name
+        const lightTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Light');
+        const darkTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Dark');
+
+        if (lightTheme && darkTheme) {
+          try {
+            // Link the token set to the themes
+            // We pass the actual tokenSet object provided by Penpot
+            lightTheme.addSet(tokenSet);
+            darkTheme.addSet(tokenSet);
+            console.log('=== THEMES LINKED ===');
+          } catch (e) {
+            console.error("Error linking themes:", e);
+          }
+        }
+      }
+
+    // MODE 2: Export as standard Library Colors
     } else {
       message.colors.forEach((c) => {
-        const newColor = penpot.library.local.createColor();
-        newColor.name = c.name;
-        newColor.color = c.hex;
+        // Create standard color in the local library
+        penpot.library.createColor({
+          name: c.name,
+          color: c.hex
+        });
       });
     }
 
-    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
+    // Send confirmation back to the UI
+    penpot.ui.sendMessage({
+      type: 'COLORS_ADDED',
+      count: message.colors.length
+    });
+
+    console.log('=== EXPORT FINISHED ===');
   }
 });
