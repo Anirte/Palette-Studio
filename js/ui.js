@@ -53,10 +53,10 @@ function toggleMinimize() {
   isMinimized = !isMinimized;
   if (isMinimized) {
     document.getElementById('minimizeBtn').textContent = '□';
-    penpot.ui.resize(900, 50);
+    parent.postMessage({ type: 'RESIZE', width: 900, height: 50 }, '*');
   } else {
     document.getElementById('minimizeBtn').textContent = '─';
-    penpot.ui.resize(900, 640);
+    parent.postMessage({ type: 'RESIZE', width: 900, height: 640 }, '*');
   }
 }
 

@@ -4,6 +4,9 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
 });
 
 penpot.ui.onMessage(async (message) => {
+  if (message.type === 'RESIZE') {
+    penpot.ui.resize(message.width, message.height);
+  }
   if (message.type === 'ADD_COLORS') {
     if (message.mode === 'tokens') {
       const catalog = penpot.library.local.tokens;
