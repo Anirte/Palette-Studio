@@ -3,40 +3,39 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
+// Test immediately on open
+const catalog = penpot.library.local.tokens;
+console.log('=== TOKEN API TEST ===');
+console.log('catalog:', catalog);
+console.log('catalog.sets:', catalog.sets);
+console.log('catalog.themes:', catalog.themes);
+console.log('addSet fn:', catalog.addSet);
+console.log('addTheme fn:', catalog.addTheme);
+
+const testSet = catalog.addSet({ name: 'TestSet' });
+console.log('testSet created:', testSet);
+console.log('testSet.id:', testSet.id);
+console.log('testSet.addToken fn:', testSet.addToken);
+
+const testTheme = catalog.addTheme({ group: '', name: 'TestTheme' });
+console.log('testTheme created:', testTheme);
+console.log('testTheme.addSet fn:', testTheme.addSet);
+console.log('testTheme.addSet fn source:', testTheme.addSet.toString());
+
+console.log('catalog.sets after addSet:', catalog.sets);
+console.log('first set in catalog:', catalog.sets[0]);
+console.log('is same as testSet?', catalog.sets[0] === testSet);
+
+console.log('trying theme.addSet with catalog.sets[0]...');
+try {
+  testTheme.addSet(catalog.sets[0]);
+  console.log('SUCCESS with catalog.sets[0]!');
+} catch(e) {
+  console.log('FAILED with catalog.sets[0]:', e.message);
+}
+
 penpot.ui.onMessage((message) => {
   if (message.type === 'ADD_COLORS') {
-
-    if (message.mode === 'tokens') {
-      const catalog = penpot.library.local.tokens;
-
-      const lightColors = message.colors.filter(c => c.variant === 'light');
-      const darkColors = message.colors.filter(c => c.variant === 'dark');
-      const needsThemes = lightColors.length > 0 && darkColors.length > 0;
-
-      const tokenSet = catalog.addSet({ name: 'Palette Studio' });
-
-      lightColors.forEach((c) => {
-        tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
-      });
-      darkColors.forEach((c) => {
-        tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
-      });
-
-      if (needsThemes) {
-        const lightTheme = catalog.addTheme({ group: '', name: 'Light' });
-        const darkTheme = catalog.addTheme({ group: '', name: 'Dark' });
-        lightTheme.addSet(tokenSet);
-        darkTheme.addSet(tokenSet);
-      }
-
-    } else {
-      message.colors.forEach((c) => {
-        const newColor = penpot.library.local.createColor();
-        newColor.name = c.name;
-        newColor.color = c.hex;
-      });
-    }
-
-    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
+    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: 0 });
   }
 });
