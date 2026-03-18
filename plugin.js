@@ -3,6 +3,18 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
+let savedSize = { width: 900, height: 640 };
+
+// В обработчике сообщений:
+if (message.type === 'GET_SIZE_AND_MINIMIZE') {
+  const size = penpot.ui.size;
+  if (size) savedSize = { width: size.width, height: size.height };
+  penpot.ui.resize(280, 50);
+}
+if (message.type === 'RESTORE_SIZE') {
+  penpot.ui.resize(savedSize.width, savedSize.height);
+}
+
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'RESIZE') {
     penpot.ui.resize(message.width, message.height);

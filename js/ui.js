@@ -49,18 +49,15 @@ function setTheme(t,btn){document.body.setAttribute('data-theme',t);document.que
 
 // ══════════════════════════════════════════ MINIMIZE
 let isMinimized = false;
-let savedSize = { width: 900, height: 640 };
 
 function toggleMinimize() {
   isMinimized = !isMinimized;
   if (isMinimized) {
-    // Save current size before minimizing
-    savedSize = { width: window.outerWidth || 900, height: window.outerHeight || 640 };
     document.getElementById('minimizeBtn').textContent = '□';
-    parent.postMessage({ type: 'RESIZE', width: 280, height: 50 }, '*');
+    parent.postMessage({ type: 'GET_SIZE_AND_MINIMIZE' }, '*');
   } else {
     document.getElementById('minimizeBtn').textContent = '─';
-    parent.postMessage({ type: 'RESIZE', width: savedSize.width, height: savedSize.height }, '*');
+    parent.postMessage({ type: 'RESTORE_SIZE' }, '*');
   }
 }
 
