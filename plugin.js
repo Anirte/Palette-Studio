@@ -2,70 +2,65 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   width: 900,
   height: 640
 });
-
-console.log('=== PLUGIN LOADED v7.7 ===');
-
-penpot.ui.onMessage(async (message) => {
+console.log('=== PLUGIN LOADED v8.0 ===');
+// ВАЖНО: Убрали 'async', делаем всё строго последовательно
+penpot.ui.onMessage((message) => {
   if (message.type === 'ADD_COLORS') {
 
     if (message.mode === 'tokens') {
-      console.log('=== EXPORT TOKENS v7.7 STARTED ===');
+      console.log('=== EXPORT TOKENS v8.0 STARTED ===');
 
       const tokens = penpot.library.local.tokens;
       const setName = 'PaletteStudio';
 
-      // 1. УДАЛЯЕМ СТАРЫЙ СЕТ
-      // Это критично для RC5, чтобы избежать конфликтов ID в памяти
+      // 1. ЧИСТКА (Синхронно)
       const existing = tokens.sets.find(s => s.name === setName);
       if (existing) existing.remove();
 
-      // 2. СОЗДАЕМ ТЕМЫ С ОБЯЗАТЕЛЬНЫМ ПОЛЕМ GROUP
-      // Лог v7.5 четко показал: без group: "" Penpot выдает ошибку валидации
+      // 2. СОЗДАЕМ ТЕМЫ (Явно указываем group, чтобы не было ошибки missing-key)
       let lightT = tokens.themes.find(t => t.name === 'Light') ||
-                   tokens.addTheme({ name: 'Light', group: "" });
+                   tokens.addTheme({ name: 'Light', group: '' });
 
       let darkT = tokens.themes.find(t => t.name === 'Dark') ||
-                  tokens.addTheme({ name: 'Dark', group: "" });
+                  tokens.addTheme({ name: 'Dark', group: '' });
 
-      // 3. СОЗДАЕМ СЕТ
-      // Мы берем тот объект, который вернула функция - это "живой" прокси
-      const freshSet = tokens.addSet({ name: setName });
+      // 3. СОЗДАЕМ СЕТ И ПРИВЯЗЫВАЕМ МГНОВЕННО
+      // Мы не делаем пауз, не вызываем console.log между этими строками
+      const tokenSet = tokens.addSet({ name: setName });
 
-      if (freshSet) {
-        // 4. ДОБАВЛЯЕМ ТОКЕНЫ
-        message.colors.forEach(c => {
-          freshSet.addToken({ type: 'color', name: c.name, value: c.hex });
-        });
-
-        // 5. ПРИВЯЗЫВАЕМ К ТЕМАМ
-        // Мы используем ПРЯМОЙ вызов addSet(freshSet)
+      if (tokenSet) {
         try {
-          if (lightT) lightT.addSet(freshSet);
-          if (darkT) darkT.addSet(freshSet);
-          console.log('=== SUCCESS: Linking completed ===');
+          // Привязываем СРАЗУ. Это критично для обхода валидатора RC5
+          if (lightT) lightT.addSet(tokenSet);
+          if (darkT) darkT.addSet(tokenSet);
+          console.log('=== LINKING ATTEMPTED ===');
         } catch (e) {
-          console.warn("Proxy linking failed, trying to refetch...");
-          // Если прямой объект не прошел, пробуем заново найти его в базе
-          // Иногда в RC5 это "освежает" прокси
-          const refetchedSet = tokens.sets.find(s => s.name === setName);
-          try {
-            if (lightT) lightT.addSet(refetchedSet);
-            if (darkT) darkT.addSet(refetchedSet);
-            console.log('=== SUCCESS: Linking completed with refetched set ===');
-          } catch (e2) {
-            console.error("Penpot RC5 is blocking programmatic linking.");
-          }
+          console.error("Linking failed in synchronous block:", e);
         }
+
+        // 4. НАПОЛНЯЕМ ЦВЕТАМИ В ПОСЛЕДНЮЮ ОЧЕРЕДЬ
+        // Когда связи уже установлены, наполнение не вызовет проблем
+        message.colors.forEach(c => {
+          tokenSet.addToken({
+            type: 'color',
+            name: c.name,
+            value: c.hex
+          });
+        });
       }
 
     } else {
-      // Стандартный экспорт цветов
+      // Обычный экспорт
       message.colors.forEach((c) => {
         penpot.library.createColor({ name: c.name, color: c.hex });
       });
     }
 
-    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
-    console.log('=== EXPORT FINISHED v7.7 ===');
+    penpot.ui.sendMessage({
+      type: 'COLORS_ADDED',
+      count: message.colors.length
+    });
+
+    console.log('=== EXPORT FINISHED v8.0 ===');
   }
 });
