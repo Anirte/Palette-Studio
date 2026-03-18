@@ -3,72 +3,70 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v7.1 ===');
+console.log('=== PLUGIN LOADED v7.2 ===');
 
+// Complete handler for messages from UI
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
 
-    // --- MODE 1: EXPORT AS DESIGN TOKENS ---
+    // --- MODE: DESIGN TOKENS ---
     if (message.mode === 'tokens') {
-      console.log('=== EXPORT TOKENS STARTED ===');
+      console.log('=== EXPORT TOKENS STARTED (STRICT ID MODE) ===');
 
-      // 1. Prepare data
       const lightColors = message.colors.filter(c => c.variant === 'light');
       const darkColors = message.colors.filter(c => c.variant === 'dark');
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
 
-      // 2. Create or find the Token Set
+      // 1. Handle Token Set (Find or Create)
       const setName = 'Palette Studio';
       let tokenSet = penpot.library.local.tokens.sets.find(s => s.name === setName);
+
       if (!tokenSet) {
         penpot.library.local.tokens.addSet({ name: setName });
+        // After adding, we MUST find it again to get the valid Penpot object
         tokenSet = penpot.library.local.tokens.sets.find(s => s.name === setName);
       }
 
-      // 3. Add tokens to the set
+      if (!tokenSet) {
+        console.error("Critical: Could not create or find TokenSet");
+        return;
+      }
+
+      // 2. Add Tokens to the Set
       message.colors.forEach((c) => {
         tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
       });
 
-      // 4. Handle Themes if we have both variants
+      // 3. Handle Themes (Strictly using IDs for RC versions)
       if (needsThemes) {
-        // Give Penpot a tiny moment to index new tokens
-        await new Promise(r => setTimeout(r, 100));
+        // Wait 250ms to ensure Penpot DB is synced
+        await new Promise(r => setTimeout(r, 250));
 
-        // Create or find Light/Dark themes
-        let lightTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Light');
-        if (!lightTheme) {
-            penpot.library.local.tokens.addTheme({ group: '', name: 'Light' });
-            lightTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Light');
-        }
+        let lightTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Light') ||
+                         penpot.library.local.tokens.addTheme({ group: '', name: 'Light' });
 
-        let darkTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Dark');
-        if (!darkTheme) {
-            penpot.library.local.tokens.addTheme({ group: '', name: 'Dark' });
-            darkTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Dark');
-        }
+        let darkTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Dark') ||
+                        penpot.library.local.tokens.addTheme({ group: '', name: 'Dark' });
 
-        // Link the set to themes using the specific object Penpot expects
         try {
-          if (lightTheme) lightTheme.addSet(tokenSet);
-          if (darkTheme) darkTheme.addSet(tokenSet);
-          console.log('=== THEMES LINKED ===');
+          // CRITICAL FIX: Pass ONLY the ID string, not the whole object
+          // This is required for Penpot 2.14.0-RC to pass schema validation
+          if (lightTheme) lightTheme.addSet(tokenSet.id);
+          if (darkTheme) darkTheme.addSet(tokenSet.id);
+          console.log('=== THEMES LINKED SUCCESSFULLY VIA ID ===');
         } catch (e) {
-          console.error("Theme linking failed, but tokens are created:", e);
+          console.error("Theme linking failed in this version of Penpot:", e);
         }
       }
 
-    // --- MODE 2: EXPORT AS STANDARD LIBRARY COLORS ---
+    // --- MODE: STANDARD COLORS ---
     } else {
       message.colors.forEach((c) => {
-        penpot.library.createColor({
-          name: c.name,
-          color: c.hex
-        });
+        penpot.library.createColor({ name: c.name, color: c.hex });
       });
     }
 
-    // Send success feedback to UI
+    // Send confirmation to UI
     penpot.ui.sendMessage({
       type: 'COLORS_ADDED',
       count: message.colors.length
