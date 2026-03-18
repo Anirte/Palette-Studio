@@ -2,94 +2,84 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   width: 900,
   height: 640
 });
-console.log('=== PLUGIN LOADED v8.3 ===');
+console.log('=== PLUGIN LOADED v9.0 ===');
 
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
+    console.log('=== EXPORT TOKENS v9.0 STARTED ===');
 
     // --- MODE 1: DESIGN TOKENS ---
     if (message.mode === 'tokens') {
-      const tokens = penpot.library.local.tokens;
-      const setName = 'Palette Studio';
+      const catalog = penpot.library.local.tokens;
 
-      // 1. Ищем или создаем Сет
-      let tokenSet = tokens.sets.find(s => s.name === setName);
-      if (!tokenSet) {
-         tokenSet = tokens.addSet({ name: setName });
-         await new Promise(r => setTimeout(r, 100));
-         tokenSet = tokens.sets.find(s => s.name === setName) || tokenSet;
-      }
+      // 1. РАЗДЕЛЯЕМ ЦВЕТА И ОЧИЩАЕМ ИМЕНА
+      // Токены должны называться одинаково в обоих сетах (например: core.primary)
+      const lightColors = [];
+      const darkColors =[];
 
-      if (tokenSet) {
-        // 2. Очищаем старые токены
-        if (tokenSet.tokens && tokenSet.tokens.length > 0) {
-           tokenSet.tokens.forEach(t => { if (t.remove) t.remove(); });
+      message.colors.forEach(c => {
+        // Убираем суффиксы .light и .dark из имени
+        let cleanName = c.name.replace('.light', '').replace('.dark', '');
+
+        if (c.name.endsWith('.dark') || c.variant === 'dark') {
+          darkColors.push({ name: cleanName, hex: c.hex });
+        } else {
+          lightColors.push({ name: cleanName, hex: c.hex });
         }
+      });
 
-        // 3. Создаем Темы
-        let lightT = tokens.themes.find(t => t.name === 'Light') || tokens.addTheme({ name: 'Light', group: '' });
-        let darkT = tokens.themes.find(t => t.name === 'Dark') || tokens.addTheme({ name: 'Dark', group: '' });
-
-        // 4. ГРУППИРУЕМ ЦВЕТА ПО ИМЕНИ
-        // Это самое важное: мы объединяем светлый и темный цвет в одну "папку"
-        const groupedColors = {};
-
-        message.colors.forEach(c => {
-          let name = c.name;
-          let variant = c.variant;
-
-          // Защита: если в index.html не настроен variant, но есть суффиксы в имени (.light / .dark)
-          if (!variant) {
-            if (name.endsWith('.light')) { variant = 'light'; name = name.replace('.light', ''); }
-            else if (name.endsWith('.dark')) { variant = 'dark'; name = name.replace('.dark', ''); }
-            else variant = 'light';
-          }
-
-          if (!groupedColors[name]) groupedColors[name] = { light: null, dark: null };
-
-          if (variant === 'dark') groupedColors[name].dark = c.hex;
-          else groupedColors[name].light = c.hex;
-        });
-
-        // 5. СОЗДАЕМ УМНЫЕ ТОКЕНЫ
-        Object.keys(groupedColors).forEach(name => {
-          const hexLight = groupedColors[name].light;
-          const hexDark = groupedColors[name].dark;
-
-          // Базовый цвет (светлый, если есть, иначе темный)
-          const baseHex = hexLight || hexDark;
-
-          // Формируем настройки токена
-          const tokenPayload = {
-            type: 'color',
-            name: name,
-            value: baseHex
-          };
-
-          // Если есть темный цвет и темная тема - сразу прописываем привязку!
-          if (hexDark && darkT) {
-            tokenPayload.values = {};
-            tokenPayload.values[darkT.id] = hexDark;
-          }
-
-          // Создаем токен (он автоматически получит оба цвета для разных тем)
-          const token = tokenSet.addToken(tokenPayload);
-
-          // Резервный метод для RC5 (на случай если values в payload не сработает)
-          if (token && hexDark && darkT && typeof token.setThemeValue === 'function') {
-              try { token.setThemeValue(darkT.id, hexDark); } catch(e) {}
-          }
-        });
-
-        penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: Object.keys(groupedColors).length });
+      // 2. СОЗДАЕМ СЕТЫ (Исправление главного бага: передаем СТРОКУ, а не объект!)
+      let lightSet = catalog.sets.find(s => s.name === 'Palette Studio - Light');
+      if (!lightSet) {
+         // В API Penpot addSet принимает строку!
+         lightSet = catalog.addSet('Palette Studio - Light');
       }
 
-    // --- MODE 2: STANDARD COLORS ---
+      let darkSet = catalog.sets.find(s => s.name === 'Palette Studio - Dark');
+      if (!darkSet) {
+         darkSet = catalog.addSet('Palette Studio - Dark');
+      }
+
+      // Очищаем старые токены внутри сетов (если юзер экспортирует второй раз)
+      [lightSet, darkSet].forEach(set => {
+        if (set && set.tokens) {
+          set.tokens.forEach(t => t.remove());
+        }
+      });
+
+      // 3. ДОБАВЛЯЕМ ТОКЕНЫ В СЕТЫ
+      if (lightSet) {
+        lightColors.forEach(c => lightSet.addToken({ type: 'color', name: c.name, value: c.hex }));
+      }
+      if (darkSet) {
+        darkColors.forEach(c => darkSet.addToken({ type: 'color', name: c.name, value: c.hex }));
+      }
+
+      // 4. СОЗДАЕМ ТЕМЫ (Здесь передаем объект с обязательным group: "")
+      let lightTheme = catalog.themes.find(t => t.name === 'Light Theme') ||
+                       catalog.addTheme({ name: 'Light Theme', group: '' });
+
+      let darkTheme = catalog.themes.find(t => t.name === 'Dark Theme') ||
+                      catalog.addTheme({ name: 'Dark Theme', group: '' });
+
+      // 5. ПРИВЯЗЫВАЕМ СЕТЫ К ТЕМАМ
+      try {
+        if (lightTheme && lightSet) lightTheme.addSet(lightSet);
+        if (darkTheme && darkSet) darkTheme.addSet(darkSet);
+        console.log('=== THEMES LINKED SUCCESSFULLY ===');
+      } catch (e) {
+        console.warn("Auto-linking failed. You might need to link them manually in Penpot.", e);
+      }
+
+    // --- MODE 2: STANDARD COLORS (Старые добрые обычные цвета) ---
     } else {
       message.colors.forEach((c) => {
+        // Создаем обычный цвет (передаем объект, как требует этот конкретный метод)
         penpot.library.createColor({ name: c.name, color: c.hex });
       });
-      penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
     }
+
+    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
+    console.log('=== EXPORT FINISHED v9.0 ===');
   }
 });
