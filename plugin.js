@@ -3,75 +3,78 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v7.2 ===');
+console.log('=== PLUGIN LOADED v7.3 ===');
 
-// Complete handler for messages from UI
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
 
-    // --- MODE: DESIGN TOKENS ---
     if (message.mode === 'tokens') {
-      console.log('=== EXPORT TOKENS STARTED (STRICT ID MODE) ===');
+      console.log('=== EXPORT TOKENS STARTED (CLEAN RECREATE MODE) ===');
 
-      const lightColors = message.colors.filter(c => c.variant === 'light');
-      const darkColors = message.colors.filter(c => c.variant === 'dark');
-      const needsThemes = lightColors.length > 0 && darkColors.length > 0;
-
-      // 1. Handle Token Set (Find or Create)
       const setName = 'Palette Studio';
-      let tokenSet = penpot.library.local.tokens.sets.find(s => s.name === setName);
+      const tokensRef = penpot.library.local.tokens;
 
-      if (!tokenSet) {
-        penpot.library.local.tokens.addSet({ name: setName });
-        // After adding, we MUST find it again to get the valid Penpot object
-        tokenSet = penpot.library.local.tokens.sets.find(s => s.name === setName);
+      // 1. Удаляем старый сет, если он есть, чтобы получить "свежий" объект
+      const existingSet = tokensRef.sets.find(s => s.name === setName);
+      if (existingSet) {
+        existingSet.remove();
+        console.log('Old set removed');
       }
 
+      // 2. Создаем НОВЫЙ сет и СРАЗУ сохраняем его в переменную
+      // Этот объект - "чистый" прокси, который Penpot примет
+      const tokenSet = tokensRef.addSet({ name: setName });
+
       if (!tokenSet) {
-        console.error("Critical: Could not create or find TokenSet");
+        console.error("Failed to create TokenSet");
         return;
       }
 
-      // 2. Add Tokens to the Set
+      // 3. Добавляем токены
       message.colors.forEach((c) => {
         tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
       });
 
-      // 3. Handle Themes (Strictly using IDs for RC versions)
-      if (needsThemes) {
-        // Wait 250ms to ensure Penpot DB is synced
-        await new Promise(r => setTimeout(r, 250));
+      // 4. Темы
+      const lightColors = message.colors.filter(c => c.variant === 'light');
+      const darkColors = message.colors.filter(c => c.variant === 'dark');
 
-        let lightTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Light') ||
-                         penpot.library.local.tokens.addTheme({ group: '', name: 'Light' });
+      if (lightColors.length > 0 && darkColors.length > 0) {
+        // Микро-пауза для синхронизации базы RC-версии
+        await new Promise(r => setTimeout(r, 150));
 
-        let darkTheme = penpot.library.local.tokens.themes.find(t => t.name === 'Dark') ||
-                        penpot.library.local.tokens.addTheme({ group: '', name: 'Dark' });
+        let lightTheme = tokensRef.themes.find(t => t.name === 'Light') ||
+                         tokensRef.addTheme({ group: '', name: 'Light' });
+
+        let darkTheme = tokensRef.themes.find(t => t.name === 'Dark') ||
+                        tokensRef.addTheme({ group: '', name: 'Dark' });
 
         try {
-          // CRITICAL FIX: Pass ONLY the ID string, not the whole object
-          // This is required for Penpot 2.14.0-RC to pass schema validation
-          if (lightTheme) lightTheme.addSet(tokenSet.id);
-          if (darkTheme) darkTheme.addSet(tokenSet.id);
-          console.log('=== THEMES LINKED SUCCESSFULLY VIA ID ===');
+          // ВАЖНО: Передаем именно свежесозданный объект tokenSet
+          if (lightTheme) lightTheme.addSet(tokenSet);
+          if (darkTheme) darkTheme.addSet(tokenSet);
+          console.log('=== THEMES LINKED SUCCESSFULLY ===');
         } catch (e) {
-          console.error("Theme linking failed in this version of Penpot:", e);
+          console.error("Penpot RC Validation Error:", e);
+          // Если addSet(tokenSet) не сработал, пробуем последний шанс - addSet(tokenSet.id)
+          try {
+            lightTheme.addSet(tokenSet.id);
+            darkTheme.addSet(tokenSet.id);
+            console.log('=== THEMES LINKED VIA ID (FALLBACK) ===');
+          } catch (e2) {
+             console.error("All linking methods failed in this Penpot RC version.");
+          }
         }
       }
 
-    // --- MODE: STANDARD COLORS ---
     } else {
+      // Обычный экспорт цветов (не токены)
       message.colors.forEach((c) => {
         penpot.library.createColor({ name: c.name, color: c.hex });
       });
     }
 
-    // Send confirmation to UI
-    penpot.ui.sendMessage({
-      type: 'COLORS_ADDED',
-      count: message.colors.length
-    });
-
+    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
     console.log('=== EXPORT FINISHED ===');
   }
 });
