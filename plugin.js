@@ -2,24 +2,23 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   width: 900,
   height: 640
 });
-console.log('=== PLUGIN LOADED v9.0 ===');
+console.log('=== PLUGIN LOADED v9.1 ===');
 
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
-    console.log('=== EXPORT TOKENS v9.0 STARTED ===');
+    console.log('=== EXPORT TOKENS v9.1 STARTED ===');
 
-    // --- MODE 1: DESIGN TOKENS ---
     if (message.mode === 'tokens') {
       const catalog = penpot.library.local.tokens;
 
-      // 1. РАЗДЕЛЯЕМ ЦВЕТА И ОЧИЩАЕМ ИМЕНА
-      // Токены должны называться одинаково в обоих сетах (например: core.primary)
-      const lightColors = [];
+      // 1. РАЗДЕЛЯЕМ ЦВЕТА
+      const lightColors =[];
       const darkColors =[];
 
       message.colors.forEach(c => {
-        // Убираем суффиксы .light и .dark из имени
-        let cleanName = c.name.replace('.light', '').replace('.dark', '');
+        // Имя токена тоже НЕ ДОЛЖНО содержать пробелов!
+        // Заменяем пробелы на дефисы, убираем .light/.dark
+        let cleanName = c.name.replace('.light', '').replace('.dark', '').replace(/\s+/g, '-');
 
         if (c.name.endsWith('.dark') || c.variant === 'dark') {
           darkColors.push({ name: cleanName, hex: c.hex });
@@ -28,58 +27,45 @@ penpot.ui.onMessage(async (message) => {
         }
       });
 
-      // 2. СОЗДАЕМ СЕТЫ (Исправление главного бага: передаем СТРОКУ, а не объект!)
-      let lightSet = catalog.sets.find(s => s.name === 'Palette Studio - Light');
-      if (!lightSet) {
-         // В API Penpot addSet принимает строку!
-         lightSet = catalog.addSet('Palette Studio - Light');
-      }
+      // 2. СОЗДАЕМ СЕТЫ (Имя СТРОГО по схеме: без пробелов)
+      const lightSetName = 'PaletteStudio-Light';
+      let lightSet = catalog.sets.find(s => s.name === lightSetName);
+      if (!lightSet) lightSet = catalog.addSet({ name: lightSetName });
 
-      let darkSet = catalog.sets.find(s => s.name === 'Palette Studio - Dark');
-      if (!darkSet) {
-         darkSet = catalog.addSet('Palette Studio - Dark');
-      }
+      const darkSetName = 'PaletteStudio-Dark';
+      let darkSet = catalog.sets.find(s => s.name === darkSetName);
+      if (!darkSet) darkSet = catalog.addSet({ name: darkSetName });
 
-      // Очищаем старые токены внутри сетов (если юзер экспортирует второй раз)
-      [lightSet, darkSet].forEach(set => {
-        if (set && set.tokens) {
-          set.tokens.forEach(t => t.remove());
-        }
+      // Очистка старых токенов[lightSet, darkSet].forEach(set => {
+        if (set && set.tokens) set.tokens.forEach(t => t.remove());
       });
 
-      // 3. ДОБАВЛЯЕМ ТОКЕНЫ В СЕТЫ
-      if (lightSet) {
-        lightColors.forEach(c => lightSet.addToken({ type: 'color', name: c.name, value: c.hex }));
-      }
-      if (darkSet) {
-        darkColors.forEach(c => darkSet.addToken({ type: 'color', name: c.name, value: c.hex }));
-      }
+      // 3. ДОБАВЛЯЕМ ТОКЕНЫ
+      if (lightSet) lightColors.forEach(c => lightSet.addToken({ type: 'color', name: c.name, value: c.hex }));
+      if (darkSet) darkColors.forEach(c => darkSet.addToken({ type: 'color', name: c.name, value: c.hex }));
 
-      // 4. СОЗДАЕМ ТЕМЫ (Здесь передаем объект с обязательным group: "")
-      let lightTheme = catalog.themes.find(t => t.name === 'Light Theme') ||
-                       catalog.addTheme({ name: 'Light Theme', group: '' });
+      // 4. СОЗДАЕМ ТЕМЫ (Обязательно group: "")
+      let lightTheme = catalog.themes.find(t => t.name === 'Light') || catalog.addTheme({ name: 'Light', group: '' });
+      let darkTheme = catalog.themes.find(t => t.name === 'Dark') || catalog.addTheme({ name: 'Dark', group: '' });
 
-      let darkTheme = catalog.themes.find(t => t.name === 'Dark Theme') ||
-                      catalog.addTheme({ name: 'Dark Theme', group: '' });
-
-      // 5. ПРИВЯЗЫВАЕМ СЕТЫ К ТЕМАМ
+      // 5. ПРИВЯЗКА
       try {
         if (lightTheme && lightSet) lightTheme.addSet(lightSet);
         if (darkTheme && darkSet) darkTheme.addSet(darkSet);
         console.log('=== THEMES LINKED SUCCESSFULLY ===');
       } catch (e) {
-        console.warn("Auto-linking failed. You might need to link them manually in Penpot.", e);
+        console.warn("Linking failed.", e);
       }
 
-    // --- MODE 2: STANDARD COLORS (Старые добрые обычные цвета) ---
     } else {
+      // Обычный экспорт
       message.colors.forEach((c) => {
-        // Создаем обычный цвет (передаем объект, как требует этот конкретный метод)
-        penpot.library.createColor({ name: c.name, color: c.hex });
+        let cleanName = c.name.replace(/\s+/g, '-');
+        penpot.library.createColor({ name: cleanName, color: c.hex });
       });
     }
 
     penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
-    console.log('=== EXPORT FINISHED v9.0 ===');
+    console.log('=== EXPORT FINISHED v9.1 ===');
   }
 });
