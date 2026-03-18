@@ -53,10 +53,10 @@ let isMinimized = false;
 function toggleMinimize() {
   isMinimized = !isMinimized;
   if (isMinimized) {
-    document.getElementById('minimizeBtn').textContent = '□';
+    document.querySelector('.nav-dot').style.opacity = '0.3';
     parent.postMessage({ type: 'GET_SIZE_AND_MINIMIZE' }, '*');
   } else {
-    document.getElementById('minimizeBtn').textContent = '─';
+    document.querySelector('.nav-dot').style.opacity = '1';
     parent.postMessage({ type: 'RESTORE_SIZE' }, '*');
   }
 }
