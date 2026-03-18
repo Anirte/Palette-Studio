@@ -1066,6 +1066,12 @@ function exportToPenpot(mode) {
     }
   });
 
+  // Warn user if tokens already exist
+  if (mode === 'tokens') {
+    const confirmed = confirm('This will replace existing Palette Studio tokens. Continue?');
+    if (!confirmed) return;
+  }
+
   parent.postMessage({
     type: 'ADD_COLORS',
     mode: mode,
@@ -1076,7 +1082,16 @@ function exportToPenpot(mode) {
 // Listen for messages from Penpot logic
 window.addEventListener('message', (event) => {
   if (event.data.type === 'COLORS_ADDED') {
-    toast(`Added ${event.data.count} colors to Penpot library!`);
+    if (event.data.needsThemes) {
+      toast(`Added ${event.data.count} tokens to Penpot!`);
+      if (!event.data.themesExist) {
+        setTimeout(() => {
+          toast('⚠️ Link "Palette Studio/Light" and "Palette Studio/Dark" sets to Light and Dark themes manually in Penpot Tokens panel.');
+        }, 2000);
+      }
+    } else {
+      toast(`Added ${event.data.count} colors to Penpot library!`);
+    }
   }
 });
 
