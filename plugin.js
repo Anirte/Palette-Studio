@@ -44,8 +44,8 @@ penpot.ui.onMessage((message) => {
         console.log('darkTheme:', darkTheme?.name);
         console.log('freshSet:', freshSet?.name);
 
-        lightTheme.addSet(freshSet);
-        darkTheme.addSet(freshSet);
+        lightTheme.addSet(freshSet.id);
+        darkTheme.addSet(freshSet.id);
         console.log('=== THEMES LINKED ===');
       }
 
