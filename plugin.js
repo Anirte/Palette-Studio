@@ -1,3 +1,8 @@
+penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
+  width: 900,
+  height: 640
+});
+
 penpot.ui.onMessage((message) => {
   if (message.type === 'ADD_COLORS') {
     if (message.mode === 'tokens') {
