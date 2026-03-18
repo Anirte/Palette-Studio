@@ -3,8 +3,6 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v12.2 ===');
-
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
     if (message.mode === 'tokens') {
@@ -15,21 +13,35 @@ penpot.ui.onMessage(async (message) => {
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
 
       if (!needsThemes) {
-        // All colors are same variant — one set, no themes
-        catalog.addSet({ name: 'Palette Studio' });
+        if (!catalog.sets.find(s => s.name === 'Palette Studio')) {
+          catalog.addSet({ name: 'Palette Studio' });
+        }
+
         await new Promise(r => setTimeout(r, 200));
         const tokenSet = catalog.sets.find(s => s.name === 'Palette Studio');
 
+        tokenSet.tokens.forEach(t => t.remove());
         message.colors.forEach((c) => {
           tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
         });
 
+        penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length, needsThemes: false });
+
       } else {
-        // Mix of light and dark — two sets and two themes
-        catalog.addSet({ name: 'Palette Studio/Light' });
-        catalog.addSet({ name: 'Palette Studio/Dark' });
-        catalog.addTheme({ group: 'mode', name: 'Light' });
-        catalog.addTheme({ group: 'mode', name: 'Dark' });
+        if (!catalog.sets.find(s => s.name === 'Palette Studio/Light')) {
+          catalog.addSet({ name: 'Palette Studio/Light' });
+        }
+        if (!catalog.sets.find(s => s.name === 'Palette Studio/Dark')) {
+          catalog.addSet({ name: 'Palette Studio/Dark' });
+        }
+
+        const themesExist = catalog.themes.find(t => t.name === 'Light' && t.group === 'mode');
+        if (!catalog.themes.find(t => t.name === 'Light')) {
+          catalog.addTheme({ group: 'mode', name: 'Light' });
+        }
+        if (!catalog.themes.find(t => t.name === 'Dark')) {
+          catalog.addTheme({ group: 'mode', name: 'Dark' });
+        }
 
         await new Promise(r => setTimeout(r, 200));
 
@@ -38,8 +50,9 @@ penpot.ui.onMessage(async (message) => {
         const lightTheme = catalog.themes.find(t => t.name === 'Light');
         const darkTheme = catalog.themes.find(t => t.name === 'Dark');
 
-        // Add light colors to light set
-        // If no dark variant exists — add to dark set too
+        lightSet.tokens.forEach(t => t.remove());
+        darkSet.tokens.forEach(t => t.remove());
+
         lightColors.forEach((c) => {
           lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
           if (!darkColors.some(d => d.name === c.name)) {
@@ -47,8 +60,6 @@ penpot.ui.onMessage(async (message) => {
           }
         });
 
-        // Add dark colors to dark set
-        // If no light variant exists — add to light set too
         darkColors.forEach((c) => {
           darkSet.addToken({ type: 'color', name: c.name, value: c.hex });
           if (!lightColors.some(l => l.name === c.name)) {
@@ -56,10 +67,15 @@ penpot.ui.onMessage(async (message) => {
           }
         });
 
-        // Link sets to themes (known bug in Penpot RC5 — addSet fails silently)
-        // User will need to link manually in Penpot UI
         lightTheme.addSet(lightSet);
         darkTheme.addSet(darkSet);
+
+        penpot.ui.sendMessage({
+          type: 'COLORS_ADDED',
+          count: lightColors.length + darkColors.length,
+          needsThemes: true,
+          themesExist: !!themesExist
+        });
       }
 
     } else {
@@ -68,8 +84,7 @@ penpot.ui.onMessage(async (message) => {
         newColor.name = c.name;
         newColor.color = c.hex;
       });
+      penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length, needsThemes: false });
     }
-
-    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
   }
 });
