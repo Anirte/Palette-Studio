@@ -12,7 +12,6 @@ penpot.ui.onMessage((message) => {
       const darkColors = message.colors.filter(c => c.variant === 'dark');
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
 
-      // Step 1: Create set and themes first
       catalog.addSet({ name: 'Palette Studio' });
 
       if (needsThemes) {
@@ -20,13 +19,9 @@ penpot.ui.onMessage((message) => {
         catalog.addTheme({ group: '', name: 'Dark' });
       }
 
-      // Step 2: Get fresh references from catalog
-      const tokenSet = catalog.sets.find(s => s.name === 'Palette Studio');
-      const lightTheme = catalog.themes.find(t => t.name === 'Light');
-      const darkTheme = catalog.themes.find(t => t.name === 'Dark');
-      const freshSet = catalog.sets.find(s => s.name === 'Palette Studio');
+      // Use index directly like in the working test
+      const tokenSet = catalog.sets[catalog.sets.length - 1];
 
-      // Step 3: Add tokens
       lightColors.forEach((c) => {
         tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
       });
@@ -34,8 +29,11 @@ penpot.ui.onMessage((message) => {
         tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
       });
 
-      // Step 4: Link set to themes
       if (needsThemes) {
+        const lightTheme = catalog.themes[catalog.themes.length - 2];
+        const darkTheme = catalog.themes[catalog.themes.length - 1];
+        const freshSet = catalog.sets[catalog.sets.length - 1];
+
         lightTheme.addSet(freshSet);
         darkTheme.addSet(freshSet);
       }
