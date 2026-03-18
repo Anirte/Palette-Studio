@@ -3,11 +3,12 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v12 ===');
+console.log('=== PLUGIN LOADED v12.1 ===');
 
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
     if (message.mode === 'tokens') {
+      console.log('colors:', JSON.stringify(message.colors));
       const catalog = penpot.library.local.tokens;
 
       const lightColors = message.colors.filter(c => c.variant === 'light');
