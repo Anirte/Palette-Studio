@@ -3,54 +3,63 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v12.1 ===');
+console.log('=== PLUGIN LOADED v12.2 ===');
 
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
     if (message.mode === 'tokens') {
-      console.log('colors:', JSON.stringify(message.colors));
       const catalog = penpot.library.local.tokens;
 
       const lightColors = message.colors.filter(c => c.variant === 'light');
       const darkColors = message.colors.filter(c => c.variant === 'dark');
       const needsThemes = lightColors.length > 0 && darkColors.length > 0;
 
-      // Step 1: Create sets and themes
-      catalog.addSet({ name: 'Palette Studio/Light' });
-      catalog.addSet({ name: 'Palette Studio/Dark' });
+      if (!needsThemes) {
+        // All colors are same variant — one set, no themes
+        catalog.addSet({ name: 'Palette Studio' });
+        await new Promise(r => setTimeout(r, 200));
+        const tokenSet = catalog.sets.find(s => s.name === 'Palette Studio');
 
-      if (needsThemes) {
-        catalog.addTheme({ group: '', name: 'Light' });
-        catalog.addTheme({ group: '', name: 'Dark' });
-      }
+        message.colors.forEach((c) => {
+          tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
+        });
 
-      // Step 2: Wait for Penpot to update its internal state
-      await new Promise(r => setTimeout(r, 200));
+      } else {
+        // Mix of light and dark — two sets and two themes
+        catalog.addSet({ name: 'Palette Studio/Light' });
+        catalog.addSet({ name: 'Palette Studio/Dark' });
+        catalog.addTheme({ group: 'mode', name: 'Light' });
+        catalog.addTheme({ group: 'mode', name: 'Dark' });
 
-      // Step 3: Get fresh references after state update
-      const lightSet = catalog.sets.find(s => s.name === 'Palette Studio/Light');
-      const darkSet = catalog.sets.find(s => s.name === 'Palette Studio/Dark');
-      console.log('lightSet after wait:', lightSet?.name);
-      console.log('darkSet after wait:', darkSet?.name);
+        await new Promise(r => setTimeout(r, 200));
 
-      // Step 4: Add tokens
-      lightColors.forEach((c) => {
-        lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
-      });
-      darkColors.forEach((c) => {
-        darkSet.addToken({ type: 'color', name: c.name, value: c.hex });
-      });
-
-      // Step 5: Link sets to themes
-      if (needsThemes) {
+        const lightSet = catalog.sets.find(s => s.name === 'Palette Studio/Light');
+        const darkSet = catalog.sets.find(s => s.name === 'Palette Studio/Dark');
         const lightTheme = catalog.themes.find(t => t.name === 'Light');
         const darkTheme = catalog.themes.find(t => t.name === 'Dark');
-        console.log('lightTheme:', lightTheme?.name);
-        console.log('darkTheme:', darkTheme?.name);
 
+        // Add light colors to light set
+        // If no dark variant exists — add to dark set too
+        lightColors.forEach((c) => {
+          lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
+          if (!darkColors.some(d => d.name === c.name)) {
+            darkSet.addToken({ type: 'color', name: c.name, value: c.hex });
+          }
+        });
+
+        // Add dark colors to dark set
+        // If no light variant exists — add to light set too
+        darkColors.forEach((c) => {
+          darkSet.addToken({ type: 'color', name: c.name, value: c.hex });
+          if (!lightColors.some(l => l.name === c.name)) {
+            lightSet.addToken({ type: 'color', name: c.name, value: c.hex });
+          }
+        });
+
+        // Link sets to themes (known bug in Penpot RC5 — addSet fails silently)
+        // User will need to link manually in Penpot UI
         lightTheme.addSet(lightSet);
         darkTheme.addSet(darkSet);
-        console.log('=== THEMES LINKED ===');
       }
 
     } else {
