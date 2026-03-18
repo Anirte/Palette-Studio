@@ -3,85 +3,68 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v7.4 ===');
+console.log('=== PLUGIN LOADED v7.5 ===');
 
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
 
+    // --- MODE 1: DESIGN TOKENS ---
     if (message.mode === 'tokens') {
-      console.log('=== EXPORT TOKENS STARTED (SWISS ARMY KNIFE MODE) ===');
+      console.log('=== EXPORT TOKENS v7.5 STARTED ===');
 
-      const setName = 'PaletteStudio'; // Убрали пробел на всякий случай для RC-версии
-      const tokensRef = penpot.library.local.tokens;
+      const tokens = penpot.library.local.tokens;
+      const setName = 'PaletteStudio';
 
-      // 1. Очистка старого
-      const existingSet = tokensRef.sets.find(s => s.name === setName || s.name === 'Palette Studio');
+      // 1. УБИРАЕМ СТАРЬЕ (чтобы не путать базу Penpot)
+      const existingSet = tokens.sets.find(s => s.name === setName);
       if (existingSet) existingSet.remove();
 
-      // 2. Умное создание сета (пробуем 3 способа для RC5)
-      let tokenSet = null;
+      // 2. ГОТОВИМ ТЕМЫ ЗАРАНЕЕ
+      let lightT = tokens.themes.find(t => t.name === 'Light') || tokens.addTheme({ name: 'Light' });
+      let darkT = tokens.themes.find(t => t.name === 'Dark') || tokens.addTheme({ name: 'Dark' });
 
-      console.log('Attempting to create set...');
-      try {
-        // Способ А: Стандартный объект
-        tokenSet = tokensRef.addSet({ name: setName });
-      } catch (e) {
+      // 3. СОЗДАЕМ СЕТ
+      const freshSet = tokens.addSet({ name: setName });
+
+      if (freshSet) {
+        // --- КРИТИЧЕСКИЙ МОМЕНТ ДЛЯ RC5 ---
+        // Привязываем Сет к Темам ПРЯМО СЕЙЧАС, пока он пустой и "валидный"
         try {
-          // Способ Б: Прямая строка (иногда в RC это работает именно так)
-          tokenSet = tokensRef.addSet(setName);
-        } catch (e2) {
-          console.warn('Direct methods failed, trying to find after silent creation...');
-        }
-      }
-
-      // Если методы выше не вернули объект сразу, ищем его в списке
-      if (!tokenSet) {
-        tokenSet = tokensRef.sets.find(s => s.name === setName);
-      }
-
-      if (!tokenSet) {
-        console.error("Penpot RC5 rejected all set creation methods.");
-        penpot.ui.sendMessage({ type: 'ERROR', message: 'Penpot RC5 API Error: Could not create Token Set' });
-        return;
-      }
-
-      // 3. Добавление токенов
-      console.log('Set created, adding tokens...');
-      message.colors.forEach((c) => {
-        tokenSet.addToken({ type: 'color', name: c.name, value: c.hex });
-      });
-
-      // 4. Темы (только если есть оба варианта)
-      const lightColors = message.colors.filter(c => c.variant === 'light');
-      const darkColors = message.colors.filter(c => c.variant === 'dark');
-
-      if (lightColors.length > 0 && darkColors.length > 0) {
-        await new Promise(r => setTimeout(r, 200));
-
-        let lightTheme = tokensRef.themes.find(t => t.name === 'LightTheme') ||
-                         tokensRef.addTheme({ group: '', name: 'LightTheme' });
-
-        let darkTheme = tokensRef.themes.find(t => t.name === 'DarkTheme') ||
-                        tokensRef.addTheme({ group: '', name: 'DarkTheme' });
-
-        try {
-          // Пробуем привязать по ID (самый безопасный путь для RC)
-          if (lightTheme) lightTheme.addSet(tokenSet.id);
-          if (darkTheme) darkTheme.addSet(tokenSet.id);
-          console.log('Themes linked via ID');
+          lightT.addSet(freshSet);
+          darkT.addSet(freshSet);
+          console.log('=== STEP 1: Empty Set successfully linked to Themes ===');
         } catch (e) {
-          console.warn("Final linking failed, Penpot RC5 is strictly validating the schema.");
+          console.warn("Direct linking failed, trying linking via ID...");
+          try {
+            lightT.addSet(freshSet.id);
+            darkT.addSet(freshSet.id);
+          } catch(e2) {
+            console.error("Penpot RC5 blocked all linking methods.");
+          }
         }
+
+        // 4. НАПОЛНЯЕМ ЦВЕТАМИ
+        // Теперь, когда связи созданы, мы можем спокойно добавлять токены
+        message.colors.forEach(c => {
+          freshSet.addToken({ type: 'color', name: c.name, value: c.hex });
+        });
+
+        console.log('=== STEP 2: Tokens added to the linked Set ===');
       }
 
+    // --- MODE 2: STANDARD COLORS ---
     } else {
-      // Обычный экспорт (не токены)
       message.colors.forEach((c) => {
         penpot.library.createColor({ name: c.name, color: c.hex });
       });
     }
 
-    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
-    console.log('=== EXPORT FINISHED ===');
+    // Отправляем ответ в интерфейс
+    penpot.ui.sendMessage({
+      type: 'COLORS_ADDED',
+      count: message.colors.length
+    });
+
+    console.log('=== EXPORT FINISHED v7.5 ===');
   }
 });
