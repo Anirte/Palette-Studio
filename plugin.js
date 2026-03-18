@@ -2,71 +2,52 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   width: 900,
   height: 640
 });
-console.log('=== PLUGIN LOADED v9.2 ===');
+console.log('=== PLUGIN LOADED v10.0 ===');
 
 penpot.ui.onMessage(async (message) => {
-  if (message.type === 'ADD_COLORS') {
-    console.log('=== EXPORT TOKENS v9.2 STARTED ===');
+  if (message.type === 'ADD_COLORS' && message.mode === 'tokens') {
+    const catalog = penpot.library.local.tokens;
+    const setName = 'PaletteStudio';
 
-    if (message.mode === 'tokens') {
-      const catalog = penpot.library.local.tokens;
+    // 1. Создаем один общий Сет
+    let tokenSet = catalog.sets.find(s => s.name === setName) || catalog.addSet({ name: setName });
 
-      // 1. РАЗДЕЛЯЕМ ЦВЕТА
-      const lightColors = [];
-      const darkColors =[];
+    // 2. Получаем или создаем темы
+    let lightT = catalog.themes.find(t => t.name === 'Light') || catalog.addTheme({ name: 'Light', group: '' });
+    let darkT = catalog.themes.find(t => t.name === 'Dark') || catalog.addTheme({ name: 'Dark', group: '' });
 
-      message.colors.forEach(c => {
-        // Имя токена тоже НЕ ДОЛЖНО содержать пробелов (по правилам Penpot)!
-        // Заменяем пробелы на дефисы, убираем .light/.dark
-        let cleanName = c.name.replace('.light', '').replace('.dark', '').replace(/\s+/g, '-');
+    // 3. Группируем цвета по имени (например: "primary")
+    const grouped = {};
+    message.colors.forEach(c => {
+      let name = c.name.replace('.light', '').replace('.dark', '').replace(/\s+/g, '-');
+      if (!grouped[name]) grouped[name] = { light: null, dark: null };
+      if (c.variant === 'dark' || c.name.endsWith('.dark')) grouped[name].dark = c.hex;
+      else grouped[name].light = c.hex;
+    });
 
-        if (c.name.endsWith('.dark') || c.variant === 'dark') {
-          darkColors.push({ name: cleanName, hex: c.hex });
-        } else {
-          lightColors.push({ name: cleanName, hex: c.hex });
-        }
+    // 4. Заполняем сет умными токенами
+    Object.keys(grouped).forEach(name => {
+      const data = grouped[name];
+
+      // Создаем токен со светлым значением по умолчанию
+      const token = tokenSet.addToken({
+        type: 'color',
+        name: name,
+        value: data.light || data.dark
       });
 
-      // 2. СОЗДАЕМ СЕТЫ (Имя СТРОГО по схеме: без пробелов)
-      const lightSetName = 'PaletteStudio-Light';
-      let lightSet = catalog.sets.find(s => s.name === lightSetName);
-      if (!lightSet) lightSet = catalog.addSet({ name: lightSetName });
-
-      const darkSetName = 'PaletteStudio-Dark';
-      let darkSet = catalog.sets.find(s => s.name === darkSetName);
-      if (!darkSet) darkSet = catalog.addSet({ name: darkSetName });
-
-      // Очистка старых токенов (ИСправлена синтаксическая ошибка здесь)
-      [lightSet, darkSet].forEach(set => {
-        if (set && set.tokens) set.tokens.forEach(t => t.remove());
-      });
-
-      // 3. ДОБАВЛЯЕМ ТОКЕНЫ
-      if (lightSet) lightColors.forEach(c => lightSet.addToken({ type: 'color', name: c.name, value: c.hex }));
-      if (darkSet) darkColors.forEach(c => darkSet.addToken({ type: 'color', name: c.name, value: c.hex }));
-
-      // 4. СОЗДАЕМ ТЕМЫ (Обязательно group: "")
-      let lightTheme = catalog.themes.find(t => t.name === 'Light') || catalog.addTheme({ name: 'Light', group: '' });
-      let darkTheme = catalog.themes.find(t => t.name === 'Dark') || catalog.addTheme({ name: 'Dark', group: '' });
-
-      // 5. ПРИВЯЗКА
-      try {
-        if (lightTheme && lightSet) lightTheme.addSet(lightSet);
-        if (darkTheme && darkSet) darkTheme.addSet(darkSet);
-        console.log('=== THEMES LINKED SUCCESSFULLY ===');
-      } catch (e) {
-        console.warn("Linking failed.", e);
+      // ПРИВЯЗКА К ТЕМАМ (через setThemeValue)
+      // В твоем файле tokens.cljs видно, что Penpot ожидает именно такую логику:
+      if (token && data.dark) {
+         // Привязываем темный цвет к ID темной темы
+         token.setThemeValue(darkT.id, data.dark);
       }
+      if (token && data.light) {
+         // Привязываем светлый цвет к ID светлой темы
+         token.setThemeValue(lightT.id, data.light);
+      }
+    });
 
-    } else {
-      // Обычный экспорт (не токены)
-      message.colors.forEach((c) => {
-        let cleanName = c.name.replace(/\s+/g, '-');
-        penpot.library.createColor({ name: cleanName, color: c.hex });
-      });
-    }
-
-    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: message.colors.length });
-    console.log('=== EXPORT FINISHED v9.2 ===');
+    penpot.ui.sendMessage({ type: 'COLORS_ADDED', count: Object.keys(grouped).length });
   }
 });
