@@ -3,53 +3,52 @@ penpot.ui.open("Palette Studio", `?theme=${penpot.theme}`, {
   height: 640
 });
 
-console.log('=== PLUGIN LOADED v7.5 ===');
+console.log('=== PLUGIN LOADED v7.6 ===');
 
 penpot.ui.onMessage(async (message) => {
   if (message.type === 'ADD_COLORS') {
 
     // --- MODE 1: DESIGN TOKENS ---
     if (message.mode === 'tokens') {
-      console.log('=== EXPORT TOKENS v7.5 STARTED ===');
+      console.log('=== EXPORT TOKENS v7.6 STARTED ===');
 
       const tokens = penpot.library.local.tokens;
-      const setName = 'PaletteStudio';
+      const setName = 'PaletteStudio'; // Без пробелов для надежности
 
-      // 1. УБИРАЕМ СТАРЬЕ (чтобы не путать базу Penpot)
+      // 1. ОЧИСТКА (важно для RC5)
       const existingSet = tokens.sets.find(s => s.name === setName);
       if (existingSet) existingSet.remove();
 
-      // 2. ГОТОВИМ ТЕМЫ ЗАРАНЕЕ
-      let lightT = tokens.themes.find(t => t.name === 'Light') || tokens.addTheme({ name: 'Light' });
-      let darkT = tokens.themes.find(t => t.name === 'Dark') || tokens.addTheme({ name: 'Dark' });
+      // 2. СОЗДАЕМ ТЕМЫ (с обязательным параметром group)
+      let lightT = tokens.themes.find(t => t.name === 'Light') ||
+                   tokens.addTheme({ name: 'Light', group: "" }); // ОБЯЗАТЕЛЬНО ""
+
+      let darkT = tokens.themes.find(t => t.name === 'Dark') ||
+                  tokens.addTheme({ name: 'Dark', group: "" });  // ОБЯЗАТЕЛЬНО ""
 
       // 3. СОЗДАЕМ СЕТ
       const freshSet = tokens.addSet({ name: setName });
 
       if (freshSet) {
-        // --- КРИТИЧЕСКИЙ МОМЕНТ ДЛЯ RC5 ---
-        // Привязываем Сет к Темам ПРЯМО СЕЙЧАС, пока он пустой и "валидный"
+        // 4. ПРИВЯЗЫВАЕМ (Пока сет пустой, это стабильнее в RC5)
         try {
-          lightT.addSet(freshSet);
-          darkT.addSet(freshSet);
-          console.log('=== STEP 1: Empty Set successfully linked to Themes ===');
+          if (lightT) lightT.addSet(freshSet);
+          if (darkT) darkT.addSet(freshSet);
+          console.log('=== STEP 1: Linking Successful ===');
         } catch (e) {
-          console.warn("Direct linking failed, trying linking via ID...");
-          try {
-            lightT.addSet(freshSet.id);
-            darkT.addSet(freshSet.id);
-          } catch(e2) {
-            console.error("Penpot RC5 blocked all linking methods.");
-          }
+          console.warn("Linking failed, Penpot is being difficult...");
         }
 
-        // 4. НАПОЛНЯЕМ ЦВЕТАМИ
-        // Теперь, когда связи созданы, мы можем спокойно добавлять токены
+        // 5. НАПОЛНЯЕМ ЦВЕТАМИ
         message.colors.forEach(c => {
-          freshSet.addToken({ type: 'color', name: c.name, value: c.hex });
+          freshSet.addToken({
+            type: 'color',
+            name: c.name,
+            value: c.hex
+          });
         });
 
-        console.log('=== STEP 2: Tokens added to the linked Set ===');
+        console.log('=== STEP 2: Tokens added ===');
       }
 
     // --- MODE 2: STANDARD COLORS ---
@@ -59,12 +58,11 @@ penpot.ui.onMessage(async (message) => {
       });
     }
 
-    // Отправляем ответ в интерфейс
     penpot.ui.sendMessage({
       type: 'COLORS_ADDED',
       count: message.colors.length
     });
 
-    console.log('=== EXPORT FINISHED v7.5 ===');
+    console.log('=== EXPORT FINISHED v7.6 ===');
   }
 });
