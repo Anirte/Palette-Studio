@@ -108,7 +108,7 @@ These two buttons work only when Palette Studio runs as a Penpot plugin.
 1. Host the project as static files (see below).
 2. In Penpot open the Plugin manager (`Ctrl+Alt+P`, or the main menu, then *Plugins*) and enter the URL of `manifest.json`.
 
-The plugin asks for one permission, `library:write`, which is needed to create colors and tokens.
+The plugin asks for two permissions: `library:write` to create library colors, and `content:write`, which Penpot requires for every change to design tokens (sets, themes and token values). If you installed an earlier version that only had `library:write`, remove the plugin in the Plugin manager and add it again so Penpot registers the new permissions.
 
 ### Hosting
 Palette Studio needs no build step. Serve the folder with a static server that sends CORS headers, because Penpot loads `manifest.json` and `plugin.js` from a different origin. Python's built-in `http.server` does not send them, so use for example:

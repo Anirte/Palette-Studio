@@ -4,6 +4,7 @@
   "version": 2,
   "code": "plugin.js",
   "permissions": [
-    "library:write"
+    "library:write",
+    "content:write"
   ]
 }
