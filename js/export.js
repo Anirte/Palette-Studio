@@ -104,14 +104,17 @@ function exportToPenpot(mode) {
     const hasBoth = hasLight && hasDark;
 
     if (mode === 'tokens') {
-      const tokenName = `${key(p.group || 'color')}.${key(p.name)}`;
-      if (hasLight) {
-        const lShade = p.shades.find((s) => s.step == cfg.light);
-        if (lShade) colorsToExport.push({name: tokenName, hex: lShade.hex, variant: 'light'});
-      }
-      if (hasDark) {
-        const dShade = p.shades.find((s) => s.step == cfg.dark);
-        if (dShade) colorsToExport.push({name: tokenName, hex: dShade.hex, variant: 'dark'});
+      // p.token comes from ROLE_CATALOG (group.name, as in the "Mobile design" system)
+      const tokenName = p.token || `${key(p.group || 'color')}.${key(p.name)}`;
+      const lShade = hasLight && p.shades.find((s) => s.step == cfg.light);
+      const dShade = hasDark && p.shades.find((s) => s.step == cfg.dark);
+      if (lShade && dShade && lShade.hex.toLowerCase() !== dShade.hex.toLowerCase()) {
+        // differs per theme: goes to the Light and Dark sets
+        colorsToExport.push({name: tokenName, hex: lShade.hex, variant: 'light'});
+        colorsToExport.push({name: tokenName, hex: dShade.hex, variant: 'dark'});
+      } else if (lShade || dShade) {
+        // same in both themes (or only one theme picked): goes to the shared set
+        colorsToExport.push({name: tokenName, hex: (lShade || dShade).hex, variant: 'shared'});
       }
     } else {
       const groupName = p.group || 'Color';
@@ -133,8 +136,10 @@ function exportToPenpot(mode) {
     }
   });
 
+  if (!colorsToExport.length) return toast('Nothing to export: pick a Light or Dark step for at least one role');
+
   if (mode === 'tokens') {
-    const confirmed = confirm('This will update existing Palette Studio tokens. Continue?');
+    const confirmed = confirm('This will create or update tokens with these names in the Penpot sets Universal, Light and Dark. Continue?');
     if (!confirmed) return;
   }
 
@@ -143,16 +148,23 @@ function exportToPenpot(mode) {
 
 // ══════════════════════════════════════════ LISTEN FOR PENPOT RESPONSE
 window.addEventListener('message', (event) => {
-  if (event.data.type === 'COLORS_ADDED') {
-    if (event.data.needsThemes) {
-      toast(`Added ${event.data.count} tokens to Penpot!`);
-      if (!event.data.themesExist) {
-        setTimeout(() => {
-          toast('⚠️ Link "Palette Studio/Light" and "Palette Studio/Dark" sets to Light and Dark themes manually in Penpot Tokens panel.');
-        }, 2000);
-      }
-    } else {
-      toast(`Added ${event.data.count} colors to Penpot library!`);
+  const msg = event.data;
+  if (!msg || typeof msg !== 'object') return;
+
+  if (msg.type === 'COLORS_ERROR') {
+    toast('Penpot: ' + String(msg.message).slice(0, 80));
+    return;
+  }
+  if (msg.type !== 'COLORS_ADDED') return;
+
+  if (msg.mode === 'tokens') {
+    toast(`Exported ${msg.count} tokens to Penpot${msg.themed ? ' (Universal + Light / Dark)' : ''}`);
+    if (msg.missingLinks && msg.missingLinks.length) {
+      setTimeout(() => {
+        toast('⚠️ Add these sets to their themes manually in the Penpot Tokens panel: ' + msg.missingLinks.join(', '));
+      }, 2000);
     }
+  } else {
+    toast(`Penpot library: ${msg.added} added, ${msg.updated} updated`);
   }
 });

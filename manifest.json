@@ -1,9 +1,7 @@
 {
   "name": "Palette Studio",
-  "version": "1.0.0",
-  "manifest_version": 1,
-  "engine": "0.1",
-  "ui": "index.html",
+  "description": "Generate HCT color palettes with Light and Dark themes, check contrast, and export them as Penpot design tokens or library colors.",
+  "version": 2,
   "code": "plugin.js",
   "permissions": [
     "library:write"
