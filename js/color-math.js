@@ -24,12 +24,13 @@ const _VC=(()=>{
   return{n,aw:(2*rgbA[0]+rgbA[1]+.05*rgbA[2])*nbb,nbb,ncb:nbb,c,nc:1,rgbD,fl,flRoot:Math.pow(fl,.25),z};
 })();
 
+function _caF(c){const af=Math.pow(_VC.fl*Math.abs(c)/100,.42);return _sgn(c)*400*af/(af+27.13)}
 function _ca(c){const af=Math.pow(Math.abs(c),.42);return _sgn(c)*400*af/(af+27.13)}
 function _cam16(argb){
   const r=_lin((argb>>16)&255),g=_lin((argb>>8)&255),b=_lin(argb&255);
   const x=.41233895*r+.35762064*g+.18051042*b,y=.2126*r+.7152*g+.0722*b,z=.01932141*r+.11916382*g+.95034478*b;
   const rC=.401288*x+.650173*y-.051461*z,gC=-.250268*x+1.204414*y+.045854*z,bC=-.002079*x+.048952*y+.953127*z;
-  const rA=_ca(_VC.rgbD[0]*rC),gA=_ca(_VC.rgbD[1]*gC),bA=_ca(_VC.rgbD[2]*bC);
+  const rA=_caF(_VC.rgbD[0]*rC),gA=_caF(_VC.rgbD[1]*gC),bA=_caF(_VC.rgbD[2]*bC);
   const a=(11*rA-12*gA+bA)/11,bb=(rA+gA-2*bA)/9,u=(20*rA+20*gA+21*bA)/20,p2=(40*rA+20*gA+bA)/20;
   const hue=_sanDeg(Math.atan2(bb,a)*180/Math.PI),hRad=hue*Math.PI/180;
   const ac=p2*_VC.nbb,j=100*Math.pow(ac/_VC.aw,_VC.c*_VC.z);
@@ -73,33 +74,46 @@ const r2h=(r,g,b)=>'#'+[r,g,b].map(v=>Math.max(0,Math.min(255,v)).toString(16).p
 const toXyz=(r,g,b)=>{r=lin(r);g=lin(g);b=lin(b);return[r*.4124564+g*.3575761+b*.1804375,r*.2126729+g*.7151522+b*.0721750,r*.0193339+g*.1191920+b*.9503041]};
 const toOklab=(x,y,z)=>{const l=Math.cbrt(.8189330101*x+.3618667424*y-.1288597137*z),m=Math.cbrt(.0329845436*x+.9293118715*y+.0361456387*z),s=Math.cbrt(.0482003018*x+.2643662691*y+.6338517070*z);return[.2104542553*l+.7936177850*m-.0040720468*s,1.9779984951*l-2.4285922050*m+.4505937099*s,.0259040371*l+.7827717662*m-.8086757660*s]};
 const fromOklab=(L,a,b)=>{const l_=L+.3963377774*a+.2158037573*b,m_=L-.1055613458*a-.0638541728*b,s_=L-.0894841775*a-1.2914855480*b,l=l_**3,m=m_**3,s=s_**3;return[4.0767416621*l-3.3077115913*m+.2309699292*s,-1.2684380046*l+2.6097574011*m-.3413193965*s,-.0041960863*l-.7034186147*m+1.7076147010*s]};
-const toRgbLin=(x,y,z)=>[x*3.2404542-y*1.5371385-z*0.4985314,-x*0.9692660+y*1.8760108+z*0.0415560,x*0.0556434-y*0.2040259+z*1.0572252];
 function hexToOklch(hex){const[r,g,b]=h2r(hex),xyz=toXyz(r,g,b),[L,a,ob]=toOklab(...xyz);return[L,Math.sqrt(a*a+ob*ob),(Math.atan2(ob,a)*180/Math.PI+360)%360]}
 function oklchToHex(L,C,H){
   if(L<=0.001)return'#000000';if(L>=0.999)return'#ffffff';
-  if(C<0.001){const v=delin(Math.max(0,Math.min(1,L)));return r2h(v,v,v)}
-  const rlin=c=>{const a=c*Math.cos(H*Math.PI/180),b=c*Math.sin(H*Math.PI/180);return toRgbLin(...fromOklab(L,a,b))};
+  if(C<0.001){const v=delin(Math.pow(Math.max(0,Math.min(1,L)),3));return r2h(v,v,v)}
+  const rlin=c=>{const a=c*Math.cos(H*Math.PI/180),b=c*Math.sin(H*Math.PI/180);return fromOklab(L,a,b)};
   const ok=c=>{const[r,g,b]=rlin(c);return r>=-0.001&&r<=1.001&&g>=-0.001&&g<=1.001&&b>=-0.001&&b<=1.001};
   let lo=0,hi=C;if(ok(hi)){lo=hi}else{for(let i=0;i<20;i++){const m=(lo+hi)/2;if(ok(m))lo=m;else hi=m}}
   const[rl,gl,bl]=rlin(lo);return r2h(delin(rl),delin(gl),delin(bl))
 }
-function maxC(L,H){let lo=0,hi=0.4;for(let i=0;i<20;i++){const m=(lo+hi)/2,a=m*Math.cos(H*Math.PI/180),b=m*Math.sin(H*Math.PI/180),[r,g,bl]=toRgbLin(...fromOklab(L,a,b));(r>=-0.001&&r<=1.001&&g>=-0.001&&g<=1.001&&bl>=-0.001&&bl<=1.001)?lo=m:hi=m}return lo}
+function maxC(L,H){let lo=0,hi=0.4;for(let i=0;i<20;i++){const m=(lo+hi)/2,a=m*Math.cos(H*Math.PI/180),b=m*Math.sin(H*Math.PI/180),[r,g,bl]=fromOklab(L,a,b);(r>=-0.001&&r<=1.001&&g>=-0.001&&g<=1.001&&bl>=-0.001&&bl<=1.001)?lo=m:hi=m}return lo}
 
 // ══════════════════════════════════════════ APCA CONTRAST
-function apcaY(hex){const[r,g,b]=h2r(hex);return 0.2126729*lin(r)+0.7151522*lin(g)+0.0721750*lin(b)}
-function apca(txtHex,bgHex){
-  const Rtxt=apcaY(txtHex),Rbg=apcaY(bgHex);
-  const Ntxt=0.57,Nbg=0.56,Sapc=1.14,Ofloor=0.1,Wb=0.03,Sc=1.618;
-  const Yt=Math.max(Rtxt,0),Yb=Math.max(Rbg,0);
-  const Ytc=Yt>Wb?Yt:Yt+Math.pow(Wb-Yt,1.33)/Sc;
-  const Ybc=Yb>Wb?Yb:Yb+Math.pow(Wb-Yb,1.33)/Sc;
-  const Lc=(Math.pow(Ybc,Nbg)-Math.pow(Ytc,Ntxt))*Sapc;
-  return Math.abs(Lc)<Ofloor?0:Lc*100;
+// Official APCA-W3 0.1.9 (SA98G constants, github.com/Myndex/apca-w3). Returns signed Lc: positive = dark text on light, negative = light text on dark.
+const SA98G={mainTRC:2.4,sRco:0.2126729,sGco:0.7151522,sBco:0.0721750,normBG:0.56,normTXT:0.57,revTXT:0.62,revBG:0.65,blkThrs:0.022,blkClmp:1.414,scaleBoW:1.14,scaleWoB:1.14,loBoWoffset:0.027,loWoBoffset:0.027,deltaYmin:0.0005,loClip:0.1};
+function apcaY(hex){
+  const[r,g,b]=h2r(hex),K=SA98G;
+  return K.sRco*Math.pow(r/255,K.mainTRC)+K.sGco*Math.pow(g/255,K.mainTRC)+K.sBco*Math.pow(b/255,K.mainTRC);
 }
+function apca(txtHex,bgHex){
+  const K=SA98G;
+  let txtY=apcaY(txtHex),bgY=apcaY(bgHex);
+  txtY=txtY>K.blkThrs?txtY:txtY+Math.pow(K.blkThrs-txtY,K.blkClmp);
+  bgY=bgY>K.blkThrs?bgY:bgY+Math.pow(K.blkThrs-bgY,K.blkClmp);
+  if(Math.abs(bgY-txtY)<K.deltaYmin)return 0;
+  if(bgY>txtY){
+    const s=(Math.pow(bgY,K.normBG)-Math.pow(txtY,K.normTXT))*K.scaleBoW;
+    return(s<K.loClip?0:s-K.loBoWoffset)*100;
+  }
+  const s=(Math.pow(bgY,K.revBG)-Math.pow(txtY,K.revTXT))*K.scaleWoB;
+  return(s>-K.loClip?0:s+K.loWoBoffset)*100;
+}
+// APCA Bronze levels (APCA in a Nutshell): 90 preferred body, 75 body min, 60 content, 45 headlines, 30 spot / solid non-text, 15 discernible
+const LC_TIERS=[[90,'lc90'],[75,'lc75'],[60,'lc60'],[45,'lc45'],[30,'lc30'],[15,'lc15'],[0,'lc0']];
+function lcTier(lc){const a=Math.abs(lc);return LC_TIERS.find(([min])=>a>=min)[1]}
 function cr(bg,a,b){return Math.abs(apca(a,bg))>=Math.abs(apca(b,bg))?a:b}
 
 // ══════════════════════════════════════════ SHADE ENGINE
 const STEPS=[50,100,200,300,400,500,600,700,800,900,950];
+// Tone (HCT lightness) of every step on the HCT ladder, M3-style: same step = same tone for every role.
+const STEP_TONES=[99,95,90,80,70,60,50,40,30,20,10];
 function pickIdx(n){const m={5:[0,2,5,8,10],6:[0,1,3,5,7,10],7:[0,1,3,5,6,8,10],8:[0,1,2,4,5,7,8,10],9:[0,1,2,4,5,6,7,9,10],10:[0,1,2,3,4,5,6,7,9,10],11:[0,1,2,3,4,5,6,7,8,9,10],12:[0,1,2,3,4,5,6,7,8,9,10,10]};return m[Math.min(12,Math.max(5,n))]??m[10]}
 
 function hexToHsl(hex){
@@ -114,62 +128,123 @@ function hexToHsl(hex){
   return[h*60,s,l];
 }
 
-function makeShades(srcHex, cf, lockHue, nSteps, Lshift, cScale, tShift, fixedL=null, hueShift=0){
+// Two ladders, chosen per role (ROLE_CATALOG.engine / .neutral):
+//  - HCT tone ladder: core, neutrals, semantic. Step N is always the same Tone, so contrast is
+//    predictable from the distance between two steps (dTone >= 40 ~ 3:1, >= 50 ~ 4.5:1).
+//  - OKLCH ladder: decorative accents / extended. Anchored on the source colour (step 500).
+// Temperature for chromatic roles: rotate the hue by |tShift| degrees toward the warm pole (Temperature > 0) or the cool pole (< 0),
+// taking the short way round, so "warm" really means warmer for every source hue (a plain +/- rotation made teal cooler at +T).
+// Poles match the ones neutrals already drift toward.
+const WARM_HUE=30,COOL_HUE=220;
+function tempRotation(hctHue,tShift){
+  if(!tShift)return 0;
+  const pole=tShift>0?WARM_HUE:COOL_HUE;
+  const dH=((pole-hctHue+540)%360)-180;
+  return(dH>=0?1:-1)*Math.abs(tShift);
+}
+
+// Valence: bell-shaped tone shift (peak at mid steps, none at the ends). gain keeps the original strength per group:
+// chromatic roles +-20 tones, semantic +-8, neutrals +-6 at Valence +-50.
+function toneForIdx(idx,Lshift,gain=100){
+  const t=STEP_TONES[idx],w=4*(t/100)*(1-t/100);
+  return Math.max(3,Math.min(99.5,t+Lshift*gain*w));
+}
+
+function makeShades(srcHex, cf, lockHue, nSteps, Lshift, cScale, tShift, hueShift=0){
   const[bL,bC,bH]=hexToOklch(srcHex);
-  const chroma=bC>=0.015;
-  const anchorL = fixedL !== null
-    ? Math.max(0.05, Math.min(0.97, fixedL + Lshift*0.3))
-    : Math.max(0.08, Math.min(0.92, bL+Lshift));
-  const midL = anchorL;
-  let neutralHue=0, neutralChroma=0;
-  if(fixedL !== null){
-    const {hue: brandHue} = hctFromHex(srcHex);
-    const tNorm = tShift / 50;
-    const pole = tNorm < 0 ? 220 : 30;
-    const tAbs = Math.abs(tNorm);
-    const dH = ((pole - brandHue + 540) % 360) - 180;
-    neutralHue = (brandHue + dH * tAbs + 360) % 360;
-    const brandC = hctFromHex(srcHex).chroma;
-    const brandBoost = Math.min(brandC / 40, 1) * 2;
-    neutralChroma = Math.max(0, (cScale - 0.1) / 1.7 * 8 + brandBoost);
-  }
+  const midL=Math.max(0.08,Math.min(0.92,bL+Lshift));
   return pickIdx(nSteps).map(idx=>{
     let L;
     if(idx===5)L=midL;
-    else if(idx<5){const t=(5-idx)/5;L=midL+t*(0.97-midL)}
+    else if(idx<5){const t=(5-idx)/5;L=midL+t*(0.995-midL)}
     else{const t=(idx-5)/5;L=midL-t*(midL-0.03)}
-    L=Math.max(0.03,Math.min(0.97,L));
-    if(fixedL !== null){
-      const tone = Math.max(0.1, Math.min(99.9, L * 100));
-      return{step:STEPS[idx], hex: hexFromHct(neutralHue, neutralChroma, tone)};
-    }
-    if(!chroma||cf===0)return{step:STEPS[idx],hex:oklchToHex(L,0,0)};
-    let finalH = bH;
+    L=Math.max(0.03,Math.min(0.995,L));
+    if(bC<0.015||cf===0)return{step:STEPS[idx],hex:oklchToHex(L,0,0)};
+    let finalH=bH;
     if(hueShift !== 0){
       const srcHct = hctFromHex(srcHex);
       const hctH = (srcHct.hue + hueShift + 360) % 360;
       const sampHex = hexFromHct(hctH, Math.min(srcHct.chroma, 40), 55);
       finalH = hexToOklch(sampHex)[2];
     }
-    const H = lockHue ? bH : ((finalH + tShift) + 360) % 360;
+    const H = lockHue ? bH : ((finalH + tempRotation(hctFromHex(srcHex).hue + hueShift, tShift)) + 360) % 360;
     const effC=bC*cf*cScale;
     return{step:STEPS[idx],hex:oklchToHex(L,Math.min(effC,maxC(L,H)),H)};
   });
+}
+
+// neutral = tinted grey: hue drifts toward a warm/cool pole with Temperature, chroma = Arousal x role tint (cf, 0.10 = reference)
+function makeToneShades(srcHex, cf, lockHue, nSteps, Lshift, cScale, tShift, hueShift=0, neutral=false){
+  const src=hctFromHex(srcHex);
+  let hue, chroma;
+  if(neutral){
+    const tNorm=tShift/50, pole=tNorm<0?220:30, tAbs=Math.abs(tNorm);
+    const dH=((pole-src.hue+540)%360)-180;
+    hue=(src.hue+dH*tAbs+360)%360;
+    const base=Math.max(0,(cScale-0.1)/1.7*8+Math.min(src.chroma/40,1)*2);
+    chroma=base*(cf/0.1);
+  }else{
+    const baseHue=src.hue+hueShift;
+    hue=(baseHue+(lockHue?0:tempRotation(baseHue,tShift))+360)%360;
+    chroma=src.chroma*cf*cScale;
+  }
+  if(!isFinite(chroma))chroma=0;
+  return pickIdx(nSteps).map(idx=>({step:STEPS[idx],hex:hexFromHct(hue,chroma,toneForIdx(idx,Lshift,neutral?30:100))}));
 }
 
 function makeSemanticShades(fixedHue, brandHex, nSteps, Lshift, cScale){
   const {chroma: brandC} = hctFromHex(brandHex);
   const baseC = 40 + Math.min(brandC / 150, 1) * 12;
   const semC = Math.max(10, baseC * cScale);
-  const midTone = Math.max(20, Math.min(80, 50 + Lshift * 40));
-  return pickIdx(nSteps).map(idx => {
-    let tone;
-    if(idx === 5) tone = midTone;
-    else if(idx < 5){ const t=(5-idx)/5; tone = midTone + t*(97-midTone); }
-    else{ const t=(idx-5)/5; tone = midTone - t*(midTone-3); }
-    tone = Math.max(3, Math.min(97, tone));
-    return { step: STEPS[idx], hex: hexFromHct(fixedHue, semC, tone) };
-  });
+  return pickIdx(nSteps).map(idx => ({step: STEPS[idx], hex: hexFromHct(fixedHue, semC, toneForIdx(idx, Lshift, 40))}));
+}
+
+function buildShades(role, srcHex, nSteps, Lshift, cScale, tShift){
+  if(role.fixed)return pickIdx(nSteps).map(idx=>({step:STEPS[idx],hex:role.fixed}));
+  if(role.fixedHue!==undefined)return makeSemanticShades(role.fixedHue,srcHex,nSteps,Lshift,cScale);
+  if(role.engine==='oklch')return makeShades(srcHex,role.cf,role.lock,nSteps,Lshift,cScale,tShift,role.hueShift??0);
+  return makeToneShades(srcHex,role.cf,role.lock,nSteps,Lshift,cScale,tShift,role.hueShift??0,!!role.neutral);
+}
+
+function nearestStep(shades,step){
+  let best=shades[0]?.step??500;
+  for(const s of shades)if(Math.abs(s.step-step)<Math.abs(best-step))best=s.step;
+  return best;
+}
+
+// ══════════════════════════════════════════ COLOUR-BLIND SIMULATION
+// Dichromacy matrices applied to LINEAR RGB, from Krzywinski, mk.bcgsc.ca/colorblind/math.mhtml (sRGB -> linear -> XYZ -> LMS -> projection -> back, folded into one 3x3).
+// Full dichromacy only; achroma = luminance. No standard threshold exists for the resulting colour difference, so dE is shown as a number, not a verdict.
+const CVD_T={
+  protan:[[0.170556992,0.829443014,0],[0.170556991,0.829443008,0],[-0.004517144,0.004517144,1]],
+  deutan:[[0.33066007,0.66933993,0],[0.33066007,0.66933993,0],[-0.02785538,0.02785538,1]],
+  tritan:[[1,0.1273989,-0.1273989],[0,0.8739093,0.1260907],[0,0.8739093,0.1260907]],
+  achroma:[[0.2126,0.7152,0.0722],[0.2126,0.7152,0.0722],[0.2126,0.7152,0.0722]]
+};
+function cvdLin(hex,kind){
+  const rgb=h2r(hex).map(lin);
+  if(!kind||kind==='normal')return rgb;
+  const m=CVD_T[kind];
+  return m.map(row=>Math.max(0,Math.min(1,row[0]*rgb[0]+row[1]*rgb[1]+row[2]*rgb[2])));
+}
+function cvdHex(hex,kind){const[r,g,b]=cvdLin(hex,kind);return r2h(delin(r),delin(g),delin(b))}
+function _labOfLin([r,g,b]){
+  const X=0.4124564*r+0.3575761*g+0.1804375*b,Y=0.2126729*r+0.7151522*g+0.0721750*b,Z=0.0193339*r+0.1191920*g+0.9503041*b;
+  const f=v=>v>216/24389?Math.cbrt(v):(24389/27*v+16)/116;
+  const fx=f(X/0.95047),fy=f(Y),fz=f(Z/1.08883);
+  return[116*fy-16,500*(fx-fy),200*(fy-fz)];
+}
+// CIE76 colour difference between two colours as seen with the given vision type (kind null/'normal' = trichromat)
+function cvdDeltaE(aHex,bHex,kind){
+  const a=_labOfLin(cvdLin(aHex,kind)),b=_labOfLin(cvdLin(bHex,kind));
+  return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+}
+
+// ══════════════════════════════════════════ WCAG 2.x CONTRAST
+function wcag(aHex,bHex){
+  const L=h=>{const[r,g,b]=h2r(h);return 0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b)};
+  const x=L(aHex),y=L(bHex);
+  return(Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);
 }
 
 // ══════════════════════════════════════════ IMAGE UTILS

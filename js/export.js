@@ -1,23 +1,6 @@
 // ══════════════════════════════════════════ EXPORT FORMAT
 function genExport(palData) {
-  if (!palData) {
-    const {Lshift, C, T, S} = getSliders();
-    palData = activeRoles().map((r) => {
-      const catalogRole = ROLE_CATALOG.find((x) => x.id === r.id) || r;
-      let src, shades;
-      if (catalogRole.fixed) {
-        src = {hex: catalogRole.fixed};
-        shades = makeShades(src.hex, r.cf, r.lock, S, Lshift, C, T, null, 0);
-      } else if (catalogRole.fixedHue !== undefined) {
-        src = srcForRole(r);
-        shades = makeSemanticShades(catalogRole.fixedHue, src.hex, S, Lshift, C);
-      } else {
-        src = srcForRole(r);
-        shades = makeShades(src.hex, r.cf, r.lock, S, Lshift, C, T, catalogRole.fixedL ?? null, catalogRole.hueShift ?? 0);
-      }
-      return {...r, src, shades};
-    });
-  }
+  if (!palData) palData = computePalData();
   const key = (n) => n.toLowerCase().replace(/\s+/g, '-');
 
   if (exportFmt === 'css') {
@@ -108,25 +91,8 @@ function importPalette(event) {
 
 // ══════════════════════════════════════════ EXPORT TO PENPOT
 function exportToPenpot(mode) {
-  const {Lshift, C, T, S} = getSliders();
-  const active = activeRoles();
-  if (!active.length) return toast('No active roles to export');
-
-  const palData = active.map((r) => {
-    const catalogRole = ROLE_CATALOG.find((x) => x.id === r.id) || r;
-    let src, shades;
-    if (catalogRole.fixed) {
-      src = {hex: catalogRole.fixed};
-      shades = makeShades(src.hex, r.cf, r.lock, S, Lshift, C, T, catalogRole.fixedL ?? null, catalogRole.hueShift ?? 0);
-    } else if (catalogRole.fixedHue !== undefined) {
-      src = srcForRole(r);
-      shades = makeSemanticShades(catalogRole.fixedHue, src.hex, S, Lshift, C);
-    } else {
-      src = srcForRole(r);
-      shades = makeShades(src.hex, r.cf, r.lock, S, Lshift, C, T, catalogRole.fixedL ?? null, catalogRole.hueShift ?? 0);
-    }
-    return {...r, src, shades, group: catalogRole.group};
-  });
+  const palData = computePalData();
+  if (!palData.length) return toast('No active roles to export');
 
   const colorsToExport = [];
   const key = (n) => n.toLowerCase().replace(/\s+/g, '-');

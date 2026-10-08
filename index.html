@@ -101,6 +101,13 @@ main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 60px;display:block;ba
 .ct-row{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;display:flex;align-items:center;gap:3px}
 .ct-dot{width:6px;height:6px;border-radius:50%;border:1px solid rgba(128,128,128,.3);flex-shrink:0}
 .ct-aaa{color:#22d4a0}.ct-aa{color:#f5a623}.ct-fail{color:#e86060}
+.ct-lc90{color:#22d4a0}.ct-lc75{color:#8fd14f}.ct-lc60{color:#f5a623}.ct-lc45{color:#ee7d4b}.ct-lc30{color:#e86060}.ct-lc15{color:#c45a9a}.ct-lc0{color:#8a8a99}
+.cc-tbl{width:100%;border-collapse:collapse;font-size:13px}.cc-tbl th{text-align:left;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);padding:6px 14px;border-bottom:1px solid var(--line)}.cc-tbl td{padding:6px 14px;border-bottom:1px solid var(--line);color:var(--t2);white-space:nowrap}.cc-sw{display:inline-block;min-width:30px;text-align:center;border-radius:4px;padding:1px 6px;font-weight:700;border:1px solid var(--line);margin-right:6px}.cc-min{color:var(--t3);margin-left:6px;font-size:12px}.cc-lc{color:var(--t3);font-size:12px;margin-left:6px}
+.cv-chip{display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid var(--line2);vertical-align:middle;margin-right:2px}
+.cc-add{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 14px 4px;font-size:13px;color:var(--t3)}.cc-add .prev-select{max-width:200px}.cc-color{width:30px;height:24px;padding:0;border:1px solid var(--line2);border-radius:4px;background:none;cursor:pointer}.cc-sub td{font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);padding-top:10px}.cc-kind{margin-left:8px}.cc-custom .del-btn{margin-left:4px}
+.pv-row{display:flex;gap:26px;padding:6px 14px 18px;flex-wrap:wrap;justify-content:center}.pv-col{display:flex;flex-direction:column;gap:8px;align-items:center}.pv-lbl{font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:1px}.pv-phone{width:280px;border-radius:26px;border:1px solid;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 28px rgba(0,0,0,.18)}.pv-top{display:flex;justify-content:space-between;align-items:center}.pv-title{font-size:20px;font-weight:700}.pv-ico{width:32px;height:32px;border-radius:50%;border:1px solid;display:flex;align-items:center;justify-content:center}.pv-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.pv-search{border:1px solid;border-radius:12px;padding:9px 12px;font-size:13px}.pv-chips{display:flex;gap:6px}.pv-chip{font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid transparent}.pv-card{display:flex;gap:12px;padding:10px;border-radius:14px}.pv-poster{width:64px;height:92px;border-radius:10px;flex-shrink:0}.pv-meta{display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0}.pv-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;font-size:12px;align-items:center}.pv-btns{display:flex;gap:8px}.pv-btn{flex:1;text-align:center;font-size:13px;font-weight:600;padding:9px 0;border-radius:12px;border:1px solid transparent}.pv-nav{display:flex;justify-content:space-around;border-top:1px solid;padding-top:12px;margin-top:2px}.pv-navi{width:22px;height:22px;border-radius:7px}.pv-tokens{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:280px}.pv-tk{width:18px;height:18px;border-radius:5px;border:1px solid var(--line2)}
+.cc-h{color:var(--t2);font-weight:700;margin-right:6px}
+.cc-legend{padding:8px 14px 10px;font-size:12px;color:var(--t3);display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 /* Help modal */
 .help-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto}
 .help-box{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:28px 32px;max-width:580px;width:90%;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.3)}
@@ -115,6 +122,7 @@ main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 60px;display:block;ba
 .help-badge.green{background:#22d4a020;color:#22d4a0}
 .help-badge.orange{background:#f5a62320;color:#f5a623}
 .help-badge.red{background:#e8606020;color:#e86060}
+.help-badge.lc90{background:#22d4a020;color:#22d4a0}.help-badge.lc75{background:#8fd14f20;color:#8fd14f}.help-badge.lc60{background:#f5a62320;color:#f5a623}.help-badge.lc45{background:#ee7d4b20;color:#ee7d4b}.help-badge.lc30{background:#e8606020;color:#e86060}.help-badge.lc15{background:#c45a9a20;color:#c45a9a}.help-badge.lc0{background:#8a8a9920;color:#8a8a99}
 /* Preview & Export */
 .preview-card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px}
 .export-card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
@@ -273,19 +281,6 @@ main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 60px;display:block;ba
         </div>
       </div>
     </div>
-    <hr class="div">
-    <!-- Contrast -->
-    <div>
-      <div class="sec-label">Contrast Check</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <button class="swatch-btn" id="btn-bg1" style="background:#ffffff" onclick="openPicker('bg1',this,event)"></button>
-        <span style="font-size:14px;color:var(--t2)">Background 1</span>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
-        <button class="swatch-btn" id="btn-bg2" style="background:#111111" onclick="openPicker('bg2',this,event)"></button>
-        <span style="font-size:14px;color:var(--t2)">Background 2</span>
-      </div>
-    </div>
   </div>
 </aside>
 <main id="main"></main>
@@ -349,12 +344,17 @@ checkConn();
     </div>
     <div class="help-section">
       <h3>Contrast Check (APCA)</h3>
-      <p>Uses APCA — the WCAG 3.0 algorithm, which is more accurate than the old WCAG 2.1. Displayed for two background colors that can be set in the Contrast Check section.</p>
+      <p>Uses APCA — the WCAG 3.0 algorithm, which is more accurate than the old WCAG 2.1. Shown in the Contrast check card for the Light / Dark steps selected on each role; you can add your own pairs there.</p>
       <ul>
-        <li><span class="help-badge green">Lc 75+</span> Normal text of any size</li>
-        <li><span class="help-badge orange">Lc 60+</span> Large text (18px+) or bold text</li>
-        <li><span class="help-badge red">Lc &lt;60</span> Decorative elements only</li>
+        <li><span class="help-badge lc90">Lc 90+</span> Preferred for body text and columns: from 18px/300 or 14px/400</li>
+        <li><span class="help-badge lc75">Lc 75+</span> Minimum for body text: 24px/300, 18px/400, 16px/500, 14px/700</li>
+        <li><span class="help-badge lc60">Lc 60+</span> Minimum for other content text: 48px/200, 36px/300, 24px/400, 21px/500, 18px/600, 16px/700</li>
+        <li><span class="help-badge lc45">Lc 45+</span> Large heavy text such as headlines: 36px/400 or 24px/700</li>
+        <li><span class="help-badge lc30">Lc 30+</span> Spot-readable text; large solid meaningful non-text (icons, buttons, borders)</li>
+        <li><span class="help-badge lc15">Lc 15+</span> Non-semantic non-text that only has to be discernible</li>
+        <li><span class="help-badge lc0">Lc &lt;15</span> Practically invisible</li>
       </ul>
+      <p>For the AAA equivalent add Lc 15 to each level. Lc is signed in APCA (negative = light text on dark); the tool shows the absolute value. The Lc values are computed with the official APCA-W3 0.1.9 algorithm. Source: <i>APCA in a Nutshell</i>.</p>
     </div>
     <div class="help-section">
       <h3>Harmony</h3>

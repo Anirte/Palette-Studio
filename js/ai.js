@@ -48,17 +48,18 @@ The user describes a project mood or theme. You must:
    - temperature: hue shift (-1=cool/blue, 0=neutral, +1=warm/orange)
 2. Choose a hue angle (0-359°) for each source. Make them visually distinct (60°+ apart).
    OKLCH hue ref: 0=red 30=orange 60=yellow 90=lime 150=green 180=cyan 220=sky 250=blue 280=violet 300=magenta 330=pink
+   Avoid defaulting to the 200-280 range (blue/cyan/sky) unless the user explicitly asks for it. Prioritize variety and surprise.
 
-Sources to assign hues to:
-${srcLines}
+   Sources to assign hues to:
+   ${srcLines}
 
-Return ONLY valid JSON:
-{"valence":0.0,"arousal":0.0,"temperature":0.0,"sources":{${sources.map((s, i) => `"${s.id}":${[250, 350, 120][i] ?? 40}`).join(',')}},"reasoning":"one sentence"}`;
-  try {
+   Return ONLY valid JSON:
+   {"valence":0.0,"arousal":0.0,"temperature":0.0,"sources":{${sources.map((s) => `"${s.id}":${Math.floor(Math.random() * 360)}`).join(',')}},"reasoning":"one sentence"}`;
+     try {
     const r = await fetch(`http://localhost:${port}/api/v1/chat`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({model, system_prompt: system, input: text, temperature: 0.65, max_output_tokens: 300, store: false})
+      body: JSON.stringify({model, system_prompt: system, input: text, temperature: 0.85, max_output_tokens: 300, store: false})
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
